@@ -1,0 +1,37 @@
+name: globly
+description: "Globly - geospatial social media."
+publish_to: 'none'
+version: 0.1.0+1
+
+environment:
+  sdk: ^3.8.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Networking & state
+  dio: ^5.8.0
+  provider: ^6.1.2
+  flutter_secure_storage: ^9.2.4
+
+  # Map & location
+  flutter_map: ^8.1.1
+  latlong2: ^0.9.1
+  geolocator: ^14.0.0
+
+  # Media
+  image_picker: ^1.1.2
+  file_picker: ^10.1.0
+  cross_file: ^0.3.4
+  video_player: ^2.9.5
+  audioplayers: ^6.4.0
+  cached_network_image: ^3.4.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
