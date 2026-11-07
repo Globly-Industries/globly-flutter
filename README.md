@@ -38,19 +38,18 @@ Debug builds allow plain HTTP (`android/app/src/debug`); release builds are HTTP
 
 ## Web demo
 
-The same code runs in a browser. It is hosted as static files on Cloudflare Pages at
-`https://globly.dagnis.my.id`, separate from the home server (which only serves the API).
+The same code runs in a browser. It is hosted as static files on Cloudflare (Workers static
+assets) at `https://globly.dagnis.my.id`, separate from the home server (which only serves the API).
+The hosting config, including the custom domain, is in `wrangler.jsonc`.
 
 ```bash
 # Local development in Chrome (API on http://localhost:5021)
 flutter run -d chrome
 
-# Build and deploy (first run asks you to log in to Cloudflare and creates the "globly" project)
+# Build and deploy (first time: `npx wrangler login`)
 flutter build web --release
-npx wrangler pages deploy build/web --project-name globly
+npx wrangler deploy
 ```
-
-Once, in the Cloudflare dashboard: Workers & Pages -> `globly` -> Custom domains -> add `globly.dagnis.my.id`.
 
 Requirements on the backend side (already configured, see the API README):
 - The API allows `https://globly.dagnis.my.id` via CORS (`Cors:AllowedOrigins`).
@@ -62,15 +61,25 @@ login token is kept in browser storage.
 For local web dev with local media storage, run the API with
 `Storage__Local__PublicBaseUrl=http://localhost:5021/media` (the default `10.0.2.2` only works in the emulator).
 
+## Languages
+English and Latvian. The app follows the device language by default; users can switch in
+Profile -> Language (or the translate icon on the login screen).
+
+Strings live in `lib/l10n/app_en.arb` (template) and `lib/l10n/app_lv.arb`. After editing them,
+`flutter gen-l10n` (or any `flutter run/build`) regenerates `app_localizations*.dart`. API errors are
+translated from their `code` in `lib/widgets/errors.dart`.
+
 ## Structure
 
 ```
 lib/
-  main.dart              app + auth gate (login / guest / signed in)
+  main.dart              app + auth gate (login / guest / signed in), languages
+  theme.dart             colours, component styles, per-content-type accent colours
+  l10n/                  English + Latvian strings (.arb) and generated localizations
   config.dart            API URL (--dart-define), map tiles
   api/api_client.dart    REST client (dio), error messages from ProblemDetails
   models/models.dart     Post, MapPoint, Comment, User, PostFilter...
-  state/                 AuthState (token in secure storage), FilterState
+  state/                 AuthState (token in secure storage), FilterState, SettingsState (language)
   screens/
     login_screen         register / sign in / browse anonymously
     home_shell           bottom nav: Map, Feed, Profile + new post button

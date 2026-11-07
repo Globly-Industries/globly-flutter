@@ -5,6 +5,7 @@ import '../api/api_client.dart';
 import '../models/models.dart';
 import '../state/filter_state.dart';
 import '../widgets/common.dart';
+import '../widgets/errors.dart';
 import '../widgets/filter_sheet.dart';
 import '../widgets/location.dart';
 import '../widgets/post_card.dart';
@@ -27,8 +28,11 @@ class FeedScreenState extends State<FeedScreen> {
   int _page = 0;
   bool _hasMore = true;
   bool _loading = false;
-  String? _error;
+  Object? _error;
   late final FilterState _filters;
+
+  /// Incremented on refresh so responses of superseded requests are dropped.
+  int _generation = 0;
 
   @override
   void initState() {
@@ -46,9 +50,6 @@ class FeedScreenState extends State<FeedScreen> {
     _scroll.dispose();
     super.dispose();
   }
-
-  /// Incremented on refresh so responses of superseded requests are dropped.
-  int _generation = 0;
 
   Future<void> refresh() async {
     _generation++;
@@ -85,7 +86,7 @@ class FeedScreenState extends State<FeedScreen> {
       }
     } catch (e) {
       if (gen != _generation) return;
-      _error = e.toString();
+      _error = e;
       _hasMore = false;
     } finally {
       if (mounted && gen == _generation) setState(() => _loading = false);
@@ -93,30 +94,32 @@ class FeedScreenState extends State<FeedScreen> {
   }
 
   Future<void> _open(Post post) async {
-    await Navigator.push(context, MaterialPageRoute(builder: (_) => PostDetailScreen(postId: post.id)));
+    final changed = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(builder: (_) => PostDetailScreen(postId: post.id, initial: post)),
+    );
+    if (changed == true) refresh();
   }
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     final filterActive = context.watch<FilterState>().filter.isActive;
+
     return Scaffold(
       appBar: AppBar(
-        title: SegmentedButton<FeedMode>(
-          segments: const [
-            ButtonSegment(value: FeedMode.newest, label: Text('Newest'), icon: Icon(Icons.schedule)),
-            ButtonSegment(value: FeedMode.nearby, label: Text('Nearby'), icon: Icon(Icons.near_me)),
-          ],
-          selected: {_mode},
-          onSelectionChanged: (s) {
-            setState(() => _mode = s.first);
-            refresh();
-          },
-        ),
+        title: Text(l.navFeed),
         actions: [
           IconButton(
-            icon: Icon(filterActive ? Icons.filter_alt : Icons.filter_alt_outlined),
+            tooltip: l.filters,
+            icon: Badge(
+              isLabelVisible: filterActive,
+              smallSize: 8,
+              child: const Icon(Icons.tune_rounded),
+            ),
             onPressed: () => showFilterSheet(context),
           ),
+          const SizedBox(width: 4),
         ],
       ),
       body: RefreshIndicator(
@@ -124,34 +127,51 @@ class FeedScreenState extends State<FeedScreen> {
         child: ListView.builder(
           controller: _scroll,
           physics: const AlwaysScrollableScrollPhysics(),
-          itemCount: _posts.length + 1,
+          padding: const EdgeInsets.only(bottom: 96),
+          itemCount: _posts.length + 2,
           itemBuilder: (context, i) {
-            if (i < _posts.length) {
-              return PostCard(post: _posts[i], onTap: () => _open(_posts[i]));
+            if (i == 0) {
+              return ContentWidth(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+                  child: SegmentedButton<FeedMode>(
+                    segments: [
+                      ButtonSegment(value: FeedMode.newest, label: Text(l.newest), icon: const Icon(Icons.schedule_rounded)),
+                      ButtonSegment(value: FeedMode.nearby, label: Text(l.nearby), icon: const Icon(Icons.near_me_rounded)),
+                    ],
+                    selected: {_mode},
+                    onSelectionChanged: (s) {
+                      setState(() => _mode = s.first);
+                      refresh();
+                    },
+                  ),
+                ),
+              );
+            }
+            final index = i - 1;
+            if (index < _posts.length) {
+              final post = _posts[index];
+              return ContentWidth(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                  child: PostCard(post: post, onTap: () => _open(post)),
+                ),
+              );
             }
             if (_loading) {
-              return const Padding(padding: EdgeInsets.all(24), child: Center(child: CircularProgressIndicator()));
+              return const Padding(padding: EdgeInsets.all(32), child: Center(child: CircularProgressIndicator()));
             }
             if (_error != null) {
-              return Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(children: [
-                  Text(_error!, textAlign: TextAlign.center),
-                  TextButton(onPressed: refresh, child: const Text('Retry')),
-                ]),
+              return EmptyState(
+                icon: Icons.cloud_off_rounded,
+                title: errorMessage(context, _error!),
+                action: OutlinedButton(onPressed: refresh, child: Text(l.retry)),
               );
             }
             if (_posts.isEmpty) {
-              return Padding(
-                padding: const EdgeInsets.all(48),
-                child: Column(children: [
-                  Icon(mediaIcon(null), size: 48),
-                  const SizedBox(height: 8),
-                  const Text('No posts yet.'),
-                ]),
-              );
+              return EmptyState(icon: Icons.explore_rounded, title: l.noPostsYet, subtitle: l.noPostsHint);
             }
-            return const SizedBox(height: 80);
+            return const SizedBox.shrink();
           },
         ),
       ),

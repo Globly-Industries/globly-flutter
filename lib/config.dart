@@ -12,6 +12,10 @@ class AppConfig {
         : (kIsWeb ? 'http://localhost:5021' : 'http://10.0.2.2:5021'),
   );
 
+  /// On Android the Turnstile widget runs in a WebView that pretends to be this page; the
+  /// hostname must be listed in the Turnstile widget's domains in the Cloudflare dashboard.
+  static const turnstileBaseUrl = 'https://globly.dagnis.my.id/';
+
   /// Must match the Android applicationId; sent to the OSM tile server.
   static const userAgentPackageName = 'com.globly.globly';
 

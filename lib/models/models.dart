@@ -11,6 +11,16 @@ enum MediaType {
       MediaType.values.firstWhere((t) => t.apiName == value, orElse: () => MediaType.text);
 }
 
+enum HiddenReason {
+  none,
+  reports,
+  downvotes,
+  admin;
+
+  static HiddenReason fromApi(String? value) =>
+      HiddenReason.values.firstWhere((r) => r.name.toLowerCase() == value?.toLowerCase(), orElse: () => HiddenReason.none);
+}
+
 class User {
   final String id;
   final String userName;
@@ -58,7 +68,9 @@ class Post {
   final int downvotes;
   final int commentCount;
   final int myVote;
-  final bool isFlagged;
+  final int reportCount;
+  final bool isHidden;
+  final HiddenReason hiddenReason;
   final DateTime createdAt;
   final DateTime? updatedAt;
 
@@ -76,7 +88,9 @@ class Post {
     required this.downvotes,
     required this.commentCount,
     required this.myVote,
-    required this.isFlagged,
+    required this.reportCount,
+    required this.isHidden,
+    required this.hiddenReason,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -97,12 +111,14 @@ class Post {
         downvotes: j['downvotes'],
         commentCount: j['commentCount'],
         myVote: j['myVote'] ?? 0,
-        isFlagged: j['isFlagged'] ?? false,
+        reportCount: j['reportCount'] ?? 0,
+        isHidden: j['isHidden'] ?? false,
+        hiddenReason: HiddenReason.fromApi(j['hiddenReason']),
         createdAt: DateTime.parse(j['createdAt']),
         updatedAt: j['updatedAt'] == null ? null : DateTime.parse(j['updatedAt']),
       );
 
-  Post copyWith({String? title, String? description, int? upvotes, int? downvotes, int? myVote}) => Post(
+  Post copyWith({String? title, String? description, int? upvotes, int? downvotes, int? myVote, bool? isHidden}) => Post(
         id: id,
         author: author,
         title: title ?? this.title,
@@ -116,7 +132,9 @@ class Post {
         downvotes: downvotes ?? this.downvotes,
         commentCount: commentCount,
         myVote: myVote ?? this.myVote,
-        isFlagged: isFlagged,
+        reportCount: reportCount,
+        isHidden: isHidden ?? this.isHidden,
+        hiddenReason: hiddenReason,
         createdAt: createdAt,
         updatedAt: updatedAt,
       );

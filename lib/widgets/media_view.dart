@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 
 import '../models/models.dart';
+import 'common.dart';
 
 /// Plays/streams a post's media directly from Cloudflare R2.
 class MediaView extends StatelessWidget {
@@ -65,7 +66,7 @@ class _VideoViewState extends State<_VideoView> {
   @override
   Widget build(BuildContext context) {
     if (_error != null) {
-      return const AspectRatio(aspectRatio: 16 / 9, child: Center(child: Text('Could not load video')));
+      return AspectRatio(aspectRatio: 16 / 9, child: Center(child: Text(context.l10n.couldNotLoadVideo)));
     }
     if (!_controller.value.isInitialized) {
       return const AspectRatio(aspectRatio: 16 / 9, child: Center(child: CircularProgressIndicator()));

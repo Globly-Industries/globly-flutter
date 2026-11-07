@@ -1,21 +1,27 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 
 import 'api/api_client.dart';
+import 'l10n/app_localizations.dart';
 import 'screens/home_shell.dart';
 import 'screens/login_screen.dart';
 import 'state/auth_state.dart';
 import 'state/filter_state.dart';
+import 'state/settings_state.dart';
+import 'theme.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   final api = ApiClient();
   final auth = AuthState(api)..restore();
+  final settings = SettingsState()..load();
 
   runApp(MultiProvider(
     providers: [
       Provider.value(value: api),
       ChangeNotifierProvider.value(value: auth),
+      ChangeNotifierProvider.value(value: settings),
       ChangeNotifierProvider(create: (_) => FilterState()),
     ],
     child: const GloblyApp(),
@@ -27,12 +33,19 @@ class GloblyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final seed = const Color(0xFF1E88E5);
     return MaterialApp(
-      title: 'Globly',
+      onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(colorSchemeSeed: seed, useMaterial3: true),
-      darkTheme: ThemeData(colorSchemeSeed: seed, brightness: Brightness.dark, useMaterial3: true),
+      theme: AppTheme.light(),
+      darkTheme: AppTheme.dark(),
+      locale: context.watch<SettingsState>().locale,
+      supportedLocales: AppLocalizations.supportedLocales,
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
       home: const _AuthGate(),
     );
   }

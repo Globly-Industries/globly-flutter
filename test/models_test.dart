@@ -24,7 +24,9 @@ void main() {
       'downvotes': 1,
       'commentCount': 2,
       'myVote': 1,
-      'isFlagged': false,
+      'reportCount': 0,
+      'isHidden': false,
+      'hiddenReason': 'None',
       'createdAt': '2026-11-07T12:00:00Z',
       'updatedAt': null,
     });

@@ -5,15 +5,20 @@ import 'package:flutter/foundation.dart';
 import '../config.dart';
 import '../models/models.dart';
 
-/// Error with a user-readable message extracted from the API's ProblemDetails.
-class ApiException implements Exception {
-  final String message;
-  final int? statusCode;
+enum ApiErrorKind { connection, timeout, server }
 
-  ApiException(this.message, [this.statusCode]);
+/// Failed API call. The UI turns this into a translated message (see widgets/errors.dart):
+/// [code] is the API's machine-readable error code, [detail] its English fallback text.
+class ApiException implements Exception {
+  final ApiErrorKind kind;
+  final int? statusCode;
+  final String? code;
+  final String? detail;
+
+  ApiException(this.kind, {this.statusCode, this.code, this.detail});
 
   @override
-  String toString() => message;
+  String toString() => detail ?? code ?? 'API error ${statusCode ?? kind.name}';
 }
 
 /// Thin typed wrapper over the Globly REST API.
@@ -47,14 +52,18 @@ class ApiClient {
 
   // ---------- Auth ----------
 
+  /// Turnstile site key for the registration human check, or null when the check is disabled.
+  Future<String?> captchaSiteKey() async =>
+      (await _call(() => _dio.get('/api/auth/config')))['captchaSiteKey'] as String?;
+
   Future<(String token, User user)> login(String userName, String password) =>
-      _authRequest('/api/auth/login', userName, password);
+      _authRequest('/api/auth/login', {'userName': userName, 'password': password});
 
-  Future<(String token, User user)> register(String userName, String password) =>
-      _authRequest('/api/auth/register', userName, password);
+  Future<(String token, User user)> register(String userName, String password, {String? captchaToken}) =>
+      _authRequest('/api/auth/register', {'userName': userName, 'password': password, 'captchaToken': captchaToken});
 
-  Future<(String, User)> _authRequest(String path, String userName, String password) async {
-    final data = await _call(() => _dio.post(path, data: {'userName': userName, 'password': password}));
+  Future<(String, User)> _authRequest(String path, Map<String, dynamic> body) async {
+    final data = await _call(() => _dio.post(path, data: body));
     return (data['token'] as String, User.fromJson(data['user']));
   }
 
@@ -135,10 +144,10 @@ class ApiClient {
 
   // ---------- Ratings ----------
 
-  /// value: 1 up, -1 down, 0 remove. Returns (upvotes, downvotes).
-  Future<(int, int)> vote(String postId, int value) async {
+  /// value: 1 up, -1 down, 0 remove. Returns new totals and whether the post got hidden.
+  Future<({int upvotes, int downvotes, bool hidden})> vote(String postId, int value) async {
     final data = await _call(() => _dio.put('/api/posts/$postId/vote', data: {'value': value}));
-    return (data['upvotes'] as int, data['downvotes'] as int);
+    return (upvotes: data['upvotes'] as int, downvotes: data['downvotes'] as int, hidden: data['isHidden'] as bool);
   }
 
   /// kind: 'All', 'Text' or 'Emoji'.
@@ -156,21 +165,24 @@ class ApiClient {
 
   Future<void> deleteComment(String id) => _call(() => _dio.delete('/api/comments/$id'));
 
-  Future<void> report(String postId, String? reason) =>
-      _call(() => _dio.post('/api/posts/$postId/report', data: {'reason': reason}));
+  /// Returns true when this report made the post hidden.
+  Future<bool> report(String postId, String? reason) async =>
+      (await _call(() => _dio.post('/api/posts/$postId/report', data: {'reason': reason})))['isHidden'] as bool;
 
   // ---------- Admin ----------
 
-  Future<Paged<Post>> adminPosts({bool flaggedOnly = true, int page = 1}) async => Paged.fromJson(
-      await _call(() => _dio.get('/api/admin/posts', queryParameters: {'flaggedOnly': flaggedOnly, 'page': page})),
+  Future<Paged<Post>> adminPosts({bool hiddenOnly = true, int page = 1}) async => Paged.fromJson(
+      await _call(() => _dio.get('/api/admin/posts', queryParameters: {'hiddenOnly': hiddenOnly, 'page': page})),
       Post.fromJson);
 
-  Future<void> adminDismissReports(String postId) => _call(() => _dio.post('/api/admin/posts/$postId/dismiss-reports'));
+  Future<void> adminRestore(String postId) => _call(() => _dio.post('/api/admin/posts/$postId/restore'));
+
+  Future<void> adminHide(String postId) => _call(() => _dio.post('/api/admin/posts/$postId/hide'));
 
   Future<void> adminDeletePost(String postId) => _call(() => _dio.delete('/api/admin/posts/$postId'));
 
   Future<Paged<AdminUser>> adminUsers({String? search, int page = 1}) async => Paged.fromJson(
-      await _call(() => _dio.get('/api/admin/users', queryParameters: {if (search != null) 'search': search, 'page': page})),
+      await _call(() => _dio.get('/api/admin/users', queryParameters: {'search': ?search, 'page': page})),
       AdminUser.fromJson);
 
   Future<void> adminDeleteUser(String userId) => _call(() => _dio.delete('/api/admin/users/$userId'));
@@ -182,31 +194,27 @@ class ApiClient {
       return (await request()).data;
     } on DioException catch (e) {
       if (CancelToken.isCancel(e)) rethrow;
-      throw ApiException(_messageFor(e), e.response?.statusCode);
+      throw _toApiException(e);
     }
   }
 
-  static String _messageFor(DioException e) {
-    final data = e.response?.data;
-    if (data is Map) {
-      final errors = data['errors'];
-      if (errors is Map && errors.isNotEmpty) {
-        return errors.values.expand((v) => v is List ? v : [v]).join('\n');
-      }
-      if (data['detail'] is String) return data['detail'];
-      if (data['title'] is String) return data['title'];
+  static ApiException _toApiException(DioException e) {
+    switch (e.type) {
+      case DioExceptionType.connectionTimeout:
+      case DioExceptionType.connectionError:
+        return ApiException(ApiErrorKind.connection);
+      case DioExceptionType.sendTimeout:
+      case DioExceptionType.receiveTimeout:
+        return ApiException(ApiErrorKind.timeout);
+      default:
+        final data = e.response?.data;
+        final map = data is Map ? data : const {};
+        return ApiException(
+          ApiErrorKind.server,
+          statusCode: e.response?.statusCode,
+          code: map['code'] as String?,
+          detail: (map['detail'] ?? map['title']) as String?,
+        );
     }
-    return switch (e.type) {
-      DioExceptionType.connectionTimeout || DioExceptionType.connectionError => 'Cannot reach the server.',
-      DioExceptionType.sendTimeout || DioExceptionType.receiveTimeout => 'The server took too long to respond.',
-      _ => switch (e.response?.statusCode) {
-          401 => 'Please sign in again.',
-          403 => 'You are not allowed to do that.',
-          404 => 'Not found.',
-          413 => 'File is too large.',
-          429 => 'Too many attempts. Try again in a minute.',
-          _ => 'Something went wrong (${e.response?.statusCode ?? e.type.name}).',
-        },
-    };
   }
 }

@@ -52,8 +52,8 @@ class AuthState extends ChangeNotifier {
   Future<void> login(String userName, String password) async =>
       _applySession(await api.login(userName, password));
 
-  Future<void> register(String userName, String password) async =>
-      _applySession(await api.register(userName, password));
+  Future<void> register(String userName, String password, {String? captchaToken}) async =>
+      _applySession(await api.register(userName, password, captchaToken: captchaToken));
 
   Future<void> continueAsGuest() async {
     await _storage.write(key: _guestKey, value: '1');

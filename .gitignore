@@ -174,3 +174,11 @@ app.*.symbols
 
 # Globly
 .vs/
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
+.env*
+!.env.example
+.wrangler/

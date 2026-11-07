@@ -4,38 +4,44 @@ import 'package:provider/provider.dart';
 import '../api/api_client.dart';
 import '../models/models.dart';
 import '../widgets/common.dart';
+import '../widgets/errors.dart';
 import '../widgets/post_card.dart';
 import 'post_detail_screen.dart';
 
-/// Administration: moderation queue (reported posts) and user removal.
+/// Administration: queue of posts hidden by community moderation, and user removal.
 class AdminScreen extends StatelessWidget {
   const AdminScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     return DefaultTabController(
       length: 2,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Administration'),
-          bottom: const TabBar(tabs: [Tab(text: 'Reported posts'), Tab(text: 'Users')]),
+          title: Text(l.administration),
+          bottom: TabBar(tabs: [
+            Tab(icon: const Icon(Icons.visibility_off_rounded), text: l.hiddenPosts),
+            Tab(icon: const Icon(Icons.group_rounded), text: l.users),
+          ]),
         ),
-        body: const TabBarView(children: [_ReportedPosts(), _Users()]),
+        body: const TabBarView(children: [_HiddenPosts(), _Users()]),
       ),
     );
   }
 }
 
-class _ReportedPosts extends StatefulWidget {
-  const _ReportedPosts();
+class _HiddenPosts extends StatefulWidget {
+  const _HiddenPosts();
 
   @override
-  State<_ReportedPosts> createState() => _ReportedPostsState();
+  State<_HiddenPosts> createState() => _HiddenPostsState();
 }
 
-class _ReportedPostsState extends State<_ReportedPosts> {
+class _HiddenPostsState extends State<_HiddenPosts> {
   late final ApiClient _api = context.read<ApiClient>();
   List<Post>? _posts;
+  Object? _error;
 
   @override
   void initState() {
@@ -45,10 +51,15 @@ class _ReportedPostsState extends State<_ReportedPosts> {
 
   Future<void> _load() async {
     try {
-      final page = await _api.adminPosts(flaggedOnly: true);
-      if (mounted) setState(() => _posts = page.items);
+      final page = await _api.adminPosts(hiddenOnly: true);
+      if (mounted) {
+        setState(() {
+          _posts = page.items;
+          _error = null;
+        });
+      }
     } catch (e) {
-      if (mounted) showMessage(context, e);
+      if (mounted) setState(() => _error = e);
     }
   }
 
@@ -61,36 +72,72 @@ class _ReportedPostsState extends State<_ReportedPosts> {
     }
   }
 
+  String _reason(Post p) {
+    final l = context.l10n;
+    return switch (p.hiddenReason) {
+      HiddenReason.downvotes => l.reasonDownvotes,
+      HiddenReason.admin => l.reasonAdmin,
+      _ => l.reasonReports(p.reportCount),
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
+    final scheme = Theme.of(context).colorScheme;
     final posts = _posts;
+
+    if (_error != null) return EmptyState(icon: Icons.cloud_off_rounded, title: errorMessage(context, _error!));
     if (posts == null) return const Center(child: CircularProgressIndicator());
+
     return RefreshIndicator(
       onRefresh: _load,
-      child: posts.isEmpty
-          ? ListView(children: const [Padding(padding: EdgeInsets.all(48), child: Center(child: Text('Nothing to review.')))])
-          : ListView(
-              children: [
-                for (final p in posts)
+      child: ListView(
+        padding: const EdgeInsets.all(12),
+        children: [
+          if (posts.isEmpty) EmptyState(icon: Icons.task_alt_rounded, title: l.nothingToReview),
+          for (final p in posts)
+            ContentWidth(
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
                   PostCard(
                     post: p,
-                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => PostDetailScreen(postId: p.id))),
-                    trailing: PopupMenuButton<String>(
-                      onSelected: (v) async {
-                        if (v == 'keep') {
-                          await _act(() => _api.adminDismissReports(p.id));
-                        } else if (await confirm(context, 'Remove post?', '"${p.title}" will be deleted.')) {
-                          await _act(() => _api.adminDeletePost(p.id));
-                        }
-                      },
-                      itemBuilder: (_) => const [
-                        PopupMenuItem(value: 'keep', child: Text('Keep (dismiss reports)')),
-                        PopupMenuItem(value: 'remove', child: Text('Remove post')),
-                      ],
+                    compact: true,
+                    trailing: Pill(icon: Icons.flag_rounded, label: _reason(p), color: scheme.error),
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => PostDetailScreen(postId: p.id, initial: p)),
                     ),
                   ),
-              ],
+                  const SizedBox(height: 8),
+                  Row(children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        icon: const Icon(Icons.restore_rounded),
+                        label: Text(l.restore),
+                        onPressed: () => _act(() => _api.adminRestore(p.id)),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: FilledButton.icon(
+                        style: FilledButton.styleFrom(backgroundColor: scheme.error, foregroundColor: scheme.onError),
+                        icon: const Icon(Icons.delete_rounded),
+                        label: Text(l.delete),
+                        onPressed: () async {
+                          if (await confirm(context, l.deletePostTitle, l.deletePostBody)) {
+                            await _act(() => _api.adminDeletePost(p.id));
+                          }
+                        },
+                      ),
+                    ),
+                  ]),
+                ]),
+              ),
             ),
+        ],
+      ),
     );
   }
 }
@@ -129,9 +176,8 @@ class _UsersState extends State<_Users> {
   }
 
   Future<void> _delete(AdminUser u) async {
-    if (!await confirm(context, 'Delete ${u.userName}?', 'Their account and all ${u.postCount} posts will be removed.')) {
-      return;
-    }
+    final l = context.l10n;
+    if (!await confirm(context, l.deleteUserTitle(u.userName), l.deleteUserBody)) return;
     try {
       await _api.adminDeleteUser(u.id);
       await _load();
@@ -142,32 +188,33 @@ class _UsersState extends State<_Users> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(children: [
-      Padding(
-        padding: const EdgeInsets.all(12),
-        child: TextField(
-          controller: _search,
-          decoration: const InputDecoration(prefixIcon: Icon(Icons.search), hintText: 'Search users', border: OutlineInputBorder()),
-          onSubmitted: (_) => _load(),
+    final l = context.l10n;
+    return ContentWidth(
+      child: Column(children: [
+        Padding(
+          padding: const EdgeInsets.all(12),
+          child: TextField(
+            controller: _search,
+            decoration: InputDecoration(prefixIcon: const Icon(Icons.search_rounded), hintText: l.searchUsers),
+            onSubmitted: (_) => _load(),
+          ),
         ),
-      ),
-      Expanded(
-        child: _users == null
-            ? const Center(child: CircularProgressIndicator())
-            : ListView(
-                children: [
+        Expanded(
+          child: _users == null
+              ? const Center(child: CircularProgressIndicator())
+              : ListView(children: [
                   for (final u in _users!)
                     ListTile(
-                      leading: Icon(u.isAdmin ? Icons.admin_panel_settings : Icons.person),
-                      title: Text(u.userName),
-                      subtitle: Text('${u.postCount} posts'),
+                      leading: UserAvatar(u.userName),
+                      title: Text(u.userName, style: const TextStyle(fontWeight: FontWeight.w600)),
+                      subtitle: Text(l.userPostCount(u.postCount)),
                       trailing: u.isAdmin
-                          ? null
-                          : IconButton(icon: const Icon(Icons.delete_outline), onPressed: () => _delete(u)),
+                          ? Pill(icon: Icons.verified_user_rounded, label: l.admin, color: Theme.of(context).colorScheme.primary)
+                          : IconButton(icon: const Icon(Icons.delete_outline_rounded), onPressed: () => _delete(u)),
                     ),
-                ],
-              ),
-      ),
-    ]);
+                ]),
+        ),
+      ]),
+    );
   }
 }
