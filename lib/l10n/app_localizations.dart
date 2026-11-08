@@ -536,24 +536,6 @@ abstract class AppLocalizations {
   /// **'Uploading… {percent}%'**
   String uploading(int percent);
 
-  /// No description provided for @camera.
-  ///
-  /// In en, this message translates to:
-  /// **'Camera'**
-  String get camera;
-
-  /// No description provided for @gallery.
-  ///
-  /// In en, this message translates to:
-  /// **'Gallery'**
-  String get gallery;
-
-  /// No description provided for @chooseAudio.
-  ///
-  /// In en, this message translates to:
-  /// **'Choose audio file'**
-  String get chooseAudio;
-
   /// No description provided for @chooseFileFirst.
   ///
   /// In en, this message translates to:
@@ -578,6 +560,48 @@ abstract class AppLocalizations {
   /// **'Location'**
   String get location;
 
+  /// No description provided for @retake.
+  ///
+  /// In en, this message translates to:
+  /// **'Retake'**
+  String get retake;
+
+  /// No description provided for @recording.
+  ///
+  /// In en, this message translates to:
+  /// **'Recording…'**
+  String get recording;
+
+  /// No description provided for @stopRecording.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop'**
+  String get stopRecording;
+
+  /// No description provided for @microphoneNeeded.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow microphone access to record audio.'**
+  String get microphoneNeeded;
+
+  /// No description provided for @captureFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not start recording. Please try again.'**
+  String get captureFailed;
+
+  /// No description provided for @approximateLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Within about {distance}'**
+  String approximateLocation(String distance);
+
+  /// No description provided for @moreFilters.
+  ///
+  /// In en, this message translates to:
+  /// **'More filters'**
+  String get moreFilters;
+
   /// No description provided for @whereCaptured.
   ///
   /// In en, this message translates to:
@@ -595,24 +619,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Use my location'**
   String get useMyLocation;
-
-  /// No description provided for @pickOnMap.
-  ///
-  /// In en, this message translates to:
-  /// **'Pick on map'**
-  String get pickOnMap;
-
-  /// No description provided for @tapToChoose.
-  ///
-  /// In en, this message translates to:
-  /// **'Tap to choose a location'**
-  String get tapToChoose;
-
-  /// No description provided for @done.
-  ///
-  /// In en, this message translates to:
-  /// **'Done'**
-  String get done;
 
   /// No description provided for @locationRequired.
   ///
@@ -637,12 +643,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Could not get your location.'**
   String get locationUnavailable;
-
-  /// No description provided for @pickerFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Could not open the file picker.'**
-  String get pickerFailed;
 
   /// No description provided for @couldNotLoadVideo.
   ///

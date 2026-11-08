@@ -7,9 +7,11 @@ import '../state/filter_state.dart';
 import '../widgets/common.dart';
 import '../widgets/errors.dart';
 import '../widgets/filter_sheet.dart';
+import '../widgets/glass.dart';
 import '../widgets/location.dart';
 import '../widgets/post_card.dart';
 import 'post_detail_screen.dart';
+import 'profile_screen.dart';
 
 enum FeedMode { newest, nearby }
 
@@ -106,8 +108,9 @@ class FeedScreenState extends State<FeedScreen> {
     final l = context.l10n;
     final filterActive = context.watch<FilterState>().filter.isActive;
 
-    return Scaffold(
-      appBar: AppBar(
+    return GlassScaffold(
+      behindBar: true,
+      appBar: GlassAppBar(
         title: Text(l.navFeed),
         actions: [
           IconButton(
@@ -119,62 +122,68 @@ class FeedScreenState extends State<FeedScreen> {
             ),
             onPressed: () => showFilterSheet(context),
           ),
+          const ProfileButton(),
           const SizedBox(width: 4),
         ],
       ),
-      body: RefreshIndicator(
-        onRefresh: refresh,
-        child: ListView.builder(
-          controller: _scroll,
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.only(bottom: 96),
-          itemCount: _posts.length + 2,
-          itemBuilder: (context, i) {
-            if (i == 0) {
-              return ContentWidth(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
-                  child: SegmentedButton<FeedMode>(
-                    segments: [
-                      ButtonSegment(value: FeedMode.newest, label: Text(l.newest), icon: const Icon(Icons.schedule_rounded)),
-                      ButtonSegment(value: FeedMode.nearby, label: Text(l.nearby), icon: const Icon(Icons.near_me_rounded)),
-                    ],
-                    selected: {_mode},
-                    onSelectionChanged: (s) {
-                      setState(() => _mode = s.first);
-                      refresh();
-                    },
+      // Builder: only below the scaffold does MediaQuery include the app and bottom bars.
+      body: Builder(builder: (context) {
+        final insets = MediaQuery.paddingOf(context);
+        return RefreshIndicator(
+          onRefresh: refresh,
+          edgeOffset: insets.top,
+          child: ListView.builder(
+            controller: _scroll,
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: EdgeInsets.only(top: insets.top + 8, bottom: insets.bottom + 24),
+            itemCount: _posts.length + 2,
+            itemBuilder: (context, i) {
+              if (i == 0) {
+                return ContentWidth(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+                    child: SegmentedButton<FeedMode>(
+                      segments: [
+                        ButtonSegment(value: FeedMode.newest, label: Text(l.newest), icon: const Icon(Icons.schedule_rounded)),
+                        ButtonSegment(value: FeedMode.nearby, label: Text(l.nearby), icon: const Icon(Icons.near_me_rounded)),
+                      ],
+                      selected: {_mode},
+                      onSelectionChanged: (s) {
+                        setState(() => _mode = s.first);
+                        refresh();
+                      },
+                    ),
                   ),
-                ),
-              );
-            }
-            final index = i - 1;
-            if (index < _posts.length) {
-              final post = _posts[index];
-              return ContentWidth(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-                  child: PostCard(post: post, onTap: () => _open(post)),
-                ),
-              );
-            }
-            if (_loading) {
-              return const Padding(padding: EdgeInsets.all(32), child: Center(child: CircularProgressIndicator()));
-            }
-            if (_error != null) {
-              return EmptyState(
-                icon: Icons.cloud_off_rounded,
-                title: errorMessage(context, _error!),
-                action: OutlinedButton(onPressed: refresh, child: Text(l.retry)),
-              );
-            }
-            if (_posts.isEmpty) {
-              return EmptyState(icon: Icons.explore_rounded, title: l.noPostsYet, subtitle: l.noPostsHint);
-            }
-            return const SizedBox.shrink();
-          },
-        ),
-      ),
+                );
+              }
+              final index = i - 1;
+              if (index < _posts.length) {
+                final post = _posts[index];
+                return ContentWidth(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                    child: PostCard(post: post, onTap: () => _open(post)),
+                  ),
+                );
+              }
+              if (_loading) {
+                return const Padding(padding: EdgeInsets.all(32), child: Center(child: CircularProgressIndicator()));
+              }
+              if (_error != null) {
+                return EmptyState(
+                  icon: Icons.cloud_off_rounded,
+                  title: errorMessage(context, _error!),
+                  action: OutlinedButton(onPressed: refresh, child: Text(l.retry)),
+                );
+              }
+              if (_posts.isEmpty) {
+                return EmptyState(icon: Icons.explore_rounded, title: l.noPostsYet, subtitle: l.noPostsHint);
+              }
+              return const SizedBox.shrink();
+            },
+          ),
+        );
+      }),
     );
   }
 }

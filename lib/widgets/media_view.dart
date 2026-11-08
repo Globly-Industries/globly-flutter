@@ -7,6 +7,7 @@ import 'package:video_player/video_player.dart';
 
 import '../models/models.dart';
 import 'common.dart';
+import 'glass.dart';
 
 /// Plays/streams a post's media directly from Cloudflare R2.
 class MediaView extends StatelessWidget {
@@ -63,6 +64,11 @@ class _VideoViewState extends State<_VideoView> {
     super.dispose();
   }
 
+  void _togglePlaying() {
+    _controller.value.isPlaying ? _controller.pause() : _controller.play();
+    setState(() {}); // The playing state changes right away; show or hide the play icon to match.
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_error != null) {
@@ -77,11 +83,12 @@ class _VideoViewState extends State<_VideoView> {
         alignment: Alignment.bottomCenter,
         children: [
           GestureDetector(
-            onTap: () => setState(() => _controller.value.isPlaying ? _controller.pause() : _controller.play()),
+            onTap: _togglePlaying,
             child: VideoPlayer(_controller),
           ),
           if (!_controller.value.isPlaying)
-            const Center(child: Icon(Icons.play_circle_fill, size: 64, color: Colors.white70)),
+            // Only an indicator: taps on it must reach the video underneath.
+            const IgnorePointer(child: Center(child: Icon(Icons.play_circle_fill, size: 64, color: Colors.white70))),
           VideoProgressIndicator(_controller, allowScrubbing: true),
         ],
       ),
@@ -131,7 +138,7 @@ class _AudioViewState extends State<_AudioView> {
     final playing = _state == PlayerState.playing;
     final max = _duration.inMilliseconds.toDouble();
     return Container(
-      color: Theme.of(context).colorScheme.surfaceContainerHighest,
+      color: glassTint(context),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
       child: Row(
         children: [

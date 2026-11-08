@@ -5,6 +5,7 @@ import '../api/api_client.dart';
 import '../models/models.dart';
 import '../widgets/common.dart';
 import '../widgets/errors.dart';
+import '../widgets/glass.dart';
 import '../widgets/post_card.dart';
 import 'post_detail_screen.dart';
 
@@ -17,8 +18,8 @@ class AdminScreen extends StatelessWidget {
     final l = context.l10n;
     return DefaultTabController(
       length: 2,
-      child: Scaffold(
-        appBar: AppBar(
+      child: GlassScaffold(
+        appBar: GlassAppBar(
           title: Text(l.administration),
           bottom: TabBar(tabs: [
             Tab(icon: const Icon(Icons.visibility_off_rounded), text: l.hiddenPosts),

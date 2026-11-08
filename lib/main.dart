@@ -52,12 +52,30 @@ class GloblyApp extends StatelessWidget {
 }
 
 /// Shows the login screen until the user signs in or chooses to browse as a guest.
-class _AuthGate extends StatelessWidget {
+class _AuthGate extends StatefulWidget {
   const _AuthGate();
 
   @override
+  State<_AuthGate> createState() => _AuthGateState();
+}
+
+class _AuthGateState extends State<_AuthGate> {
+  AuthStatus? _previous;
+
+  @override
   Widget build(BuildContext context) {
-    return switch (context.watch<AuthState>().status) {
+    final status = context.watch<AuthState>().status;
+
+    // On becoming signed out (sign out, "sign in" as a guest, expired session), close any pages
+    // open on top of this one, or they would keep covering the login screen.
+    if (status == AuthStatus.signedOut && _previous != AuthStatus.signedOut) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) Navigator.of(context).popUntil((route) => route.isFirst);
+      });
+    }
+    _previous = status;
+
+    return switch (status) {
       AuthStatus.loading => const Scaffold(body: Center(child: CircularProgressIndicator())),
       AuthStatus.signedOut => const LoginScreen(),
       AuthStatus.guest || AuthStatus.signedIn => const HomeShell(),

@@ -115,6 +115,7 @@ class ApiClient {
     required MediaType mediaType,
     required double latitude,
     required double longitude,
+    int? locationRadiusMeters,
     XFile? file,
     void Function(int sent, int total)? onProgress,
   }) async {
@@ -124,6 +125,7 @@ class ApiClient {
       'mediaType': mediaType.apiName,
       'latitude': latitude.toString(),
       'longitude': longitude.toString(),
+      if (locationRadiusMeters != null) 'locationRadiusMeters': locationRadiusMeters.toString(),
       if (file != null)
         // Web has no file system: upload from memory there, stream from disk on Android.
         'file': kIsWeb

@@ -5,7 +5,9 @@ import 'package:provider/provider.dart';
 import '../api/api_client.dart';
 import '../config.dart';
 import '../state/auth_state.dart';
+import '../theme.dart';
 import '../widgets/common.dart';
+import '../widgets/glass.dart';
 import '../widgets/language_menu.dart';
 
 /// Registration, login, or continue anonymously.
@@ -87,7 +89,7 @@ class _LoginScreenState extends State<LoginScreen> {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             // Fixed brand colours so the white text stays readable in light and dark mode.
-            colors: [Color(0xFF0D47A1), Color(0xFF00796B)],
+            colors: AppTheme.brandGradient,
           ),
         ),
         child: SafeArea(
@@ -110,8 +112,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     Text(l.tagline, textAlign: TextAlign.center,
                         style: theme.textTheme.titleMedium?.copyWith(color: Colors.white.withValues(alpha: 0.9))),
                     const SizedBox(height: 28),
-                    Card(
-                      color: scheme.surface,
+                    GlassPanel(
+                      strong: true,
                       child: Padding(
                         padding: const EdgeInsets.all(20),
                         child: Form(

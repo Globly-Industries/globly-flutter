@@ -28,16 +28,19 @@ class AppTileLayer extends StatelessWidget {
   }
 }
 
-/// Required map credits ("i" button), placed bottom-left so buttons don't cover it.
+/// Required map credits ("i" button), placed bottom-left and lifted above the bottom bar.
 class AppAttribution extends StatelessWidget {
   const AppAttribution({super.key});
 
   @override
-  Widget build(BuildContext context) => RichAttributionWidget(
-        alignment: AttributionAlignment.bottomLeft,
-        attributions: [
-          if (AppConfig.mapTilerKey.isNotEmpty) const TextSourceAttribution('MapTiler'),
-          const TextSourceAttribution('OpenStreetMap contributors'),
-        ],
+  Widget build(BuildContext context) => Padding(
+        padding: EdgeInsets.only(bottom: MediaQuery.paddingOf(context).bottom),
+        child: RichAttributionWidget(
+          alignment: AttributionAlignment.bottomLeft,
+          attributions: [
+            if (AppConfig.mapTilerKey.isNotEmpty) const TextSourceAttribution('MapTiler'),
+            const TextSourceAttribution('OpenStreetMap contributors'),
+          ],
+        ),
       );
 }

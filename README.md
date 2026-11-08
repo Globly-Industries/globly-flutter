@@ -65,8 +65,8 @@ Requirements on the backend side (already configured, see the API README):
 - The API allows `https://globly.dagnis.my.id` via CORS (`Cors:AllowedOrigins`).
 - The R2 bucket needs a CORS rule so the web app can load images.
 
-Web differences: uploads use the browser file picker, files are uploaded from memory, and the
-login token is kept in browser storage.
+Web differences: desktop browsers offer only text and audio posts (they have no camera flow, only a
+file dialog), files are uploaded from memory, and the login token is kept in browser storage.
 
 For local web dev with local media storage, run the API with
 `Storage__Local__PublicBaseUrl=http://localhost:5021/media` (the default `10.0.2.2` only works in the emulator).
@@ -92,17 +92,20 @@ lib/
   state/                 AuthState (token in secure storage), FilterState, SettingsState (language)
   screens/
     login_screen         register / sign in / browse anonymously
-    home_shell           bottom nav: Map, Feed, Profile + new post button
+    home_shell           bottom bar: Map, Feed + post wheel; profile opens from the top right
     map_screen           flutter_map + server-side clusters, tap to zoom/open
     feed_screen          newest (paged) or nearby
     post_detail_screen   media playback, votes, emoji, comments, report, edit/delete
-    create_post_screen   pick media, GPS or tap-on-map location, upload with progress
+    create_post_screen   post form for captured media (retake), current GPS location, upload with progress
     profile_screen       my posts, sign out, admin entry
     admin_screen         reported-post queue, user removal
-  widgets/               post card, media player, filter sheet, location helper
+  widgets/               glass kit, post wheel, media capture, post card, media player, filter sheet, location helper
 ```
 
 ## Notes
+- If a user gives the app only an approximate location (Android 12+ / iOS permission prompt), posts
+  send a radius and show as an area on the map instead of a pin. The app can't request this per post:
+  once precise access is granted it gets the precise position.
 - Map tiles come from MapTiler (Streets, plus Streets Dark in dark mode). The key in `lib/config.dart`
   is restricted to `*.dagnis.my.id` in the MapTiler dashboard; the Android app sends
   `https://globly.dagnis.my.id/` as `Referer` so the restriction also works there. Any subdomain of

@@ -42,6 +42,13 @@ String timeAgo(BuildContext context, DateTime time) {
   return '${t.day.toString().padLeft(2, '0')}.${t.month.toString().padLeft(2, '0')}.${t.year}';
 }
 
+/// "800 m", "2 km", "2.5 km". The units read the same in English and Latvian.
+String formatRadius(int meters) {
+  if (meters < 1000) return '$meters m';
+  final km = meters / 1000;
+  return km == km.roundToDouble() ? '${km.round()} km' : '${km.toStringAsFixed(1)} km';
+}
+
 Future<bool> confirm(BuildContext context, String title, String message, {String? action}) async {
   final l = context.l10n;
   final result = await showDialog<bool>(

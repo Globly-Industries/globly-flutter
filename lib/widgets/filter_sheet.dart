@@ -5,13 +5,11 @@ import '../models/models.dart';
 import '../state/filter_state.dart';
 import '../theme.dart';
 import 'common.dart';
+import 'glass.dart';
 
 /// Bottom sheet for choosing media types, age and minimum score.
-Future<void> showFilterSheet(BuildContext context) => showModalBottomSheet(
-      context: context,
-      showDragHandle: true,
-      isScrollControlled: true,
-      constraints: const BoxConstraints(maxWidth: 560),
+Future<void> showFilterSheet(BuildContext context) => showGlassSheet<void>(
+      context,
       builder: (_) => ChangeNotifierProvider.value(
         value: context.read<FilterState>(),
         child: const _FilterSheet(),

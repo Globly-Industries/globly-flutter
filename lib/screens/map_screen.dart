@@ -15,10 +15,12 @@ import '../theme.dart';
 import '../widgets/common.dart';
 import '../widgets/errors.dart';
 import '../widgets/filter_sheet.dart';
+import '../widgets/glass.dart';
 import '../widgets/location.dart';
 import '../widgets/map_tiles.dart';
 import '../widgets/post_card.dart';
 import 'post_detail_screen.dart';
+import 'profile_screen.dart';
 
 /// Content visualisation module: world map with server-clustered post points.
 class MapScreen extends StatefulWidget {
@@ -113,11 +115,8 @@ class MapScreenState extends State<MapScreen> {
   }
 
   Future<void> _showPreview(String postId) async {
-    final changed = await showModalBottomSheet<bool>(
-      context: context,
-      showDragHandle: true,
-      isScrollControlled: true,
-      constraints: const BoxConstraints(maxWidth: 560),
+    final changed = await showGlassSheet<bool>(
+      context,
       builder: (sheetContext) => _PostPreview(postId: postId),
     );
     if (changed == true) _load();
@@ -148,6 +147,21 @@ class MapScreenState extends State<MapScreen> {
           ),
           children: [
             const AppTileLayer(),
+            // Posts from devices that only share an approximate location show the area they are in.
+            CircleLayer(
+              circles: [
+                for (final p in _points)
+                  if (!p.isCluster && p.locationRadiusMeters != null)
+                    CircleMarker(
+                      point: LatLng(p.latitude, p.longitude),
+                      radius: p.locationRadiusMeters!.toDouble(),
+                      useRadiusInMeter: true,
+                      color: AppTheme.mediaColor(p.mediaType).withValues(alpha: 0.16),
+                      borderColor: AppTheme.mediaColor(p.mediaType).withValues(alpha: 0.55),
+                      borderStrokeWidth: 1.5,
+                    ),
+              ],
+            ),
             MarkerLayer(
               markers: [
                 for (final p in _points)
@@ -157,6 +171,14 @@ class MapScreenState extends State<MapScreen> {
                       width: _clusterSize(p.count),
                       height: _clusterSize(p.count),
                       child: GestureDetector(onTap: () => _onPointTap(p), child: _ClusterBubble(count: p.count)),
+                    )
+                  else if (p.locationRadiusMeters != null)
+                    // No pointed tip: this is the middle of an area, not an exact spot.
+                    Marker(
+                      point: LatLng(p.latitude, p.longitude),
+                      width: 44,
+                      height: 44,
+                      child: GestureDetector(onTap: () => _onPointTap(p), child: _PostPin(type: p.mediaType, tip: false)),
                     )
                   else
                     Marker(
@@ -177,36 +199,18 @@ class MapScreenState extends State<MapScreen> {
           child: Padding(
             padding: const EdgeInsets.all(12),
             child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Expanded(
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(children: [
-                    _MapButton(
-                      icon: filter.isActive ? Icons.filter_alt_rounded : Icons.tune_rounded,
-                      highlighted: filter.isActive,
-                      tooltip: context.l10n.filters,
-                      onPressed: () => showFilterSheet(context),
-                    ),
-                    const SizedBox(width: 8),
-                    for (final t in MediaType.values) ...[
-                      _TypeChip(
-                        type: t,
-                        selected: filter.types.contains(t),
-                        showLabel: MediaQuery.sizeOf(context).width >= 600,
-                        onTap: () => _toggleType(t),
-                      ),
-                      const SizedBox(width: 6),
-                    ],
-                  ]),
+              _MapFilterMenu(filter: filter, onToggleType: _toggleType),
+              const Spacer(),
+              Column(mainAxisSize: MainAxisSize.min, children: [
+                const ProfileButton(glass: true),
+                const SizedBox(height: 8),
+                _MapButton(
+                  icon: Icons.my_location_rounded,
+                  tooltip: context.l10n.useMyLocation,
+                  onPressed: _goToMyLocation,
+                  color: scheme.primary,
                 ),
-              ),
-              const SizedBox(width: 8),
-              _MapButton(
-                icon: Icons.my_location_rounded,
-                tooltip: context.l10n.useMyLocation,
-                onPressed: _goToMyLocation,
-                color: scheme.primary,
-              ),
+              ]),
             ]),
           ),
         ),
@@ -228,11 +232,10 @@ class _MapButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return Material(
-      color: highlighted ? scheme.primaryContainer : scheme.surface,
-      elevation: 3,
-      shadowColor: Colors.black38,
-      borderRadius: BorderRadius.circular(14),
+    return GlassPanel(
+      borderRadius: BorderRadius.circular(16),
+      shadow: false,
+      tint: highlighted ? scheme.primaryContainer.withValues(alpha: 0.6) : glassButtonTint(context),
       child: IconButton(
         tooltip: tooltip,
         icon: Icon(icon, color: color ?? scheme.onSurface),
@@ -242,38 +245,141 @@ class _MapButton extends StatelessWidget {
   }
 }
 
-class _TypeChip extends StatelessWidget {
-  final MediaType type;
+/// The filter button, with a dropdown: quick on/off for content types, and the full filter sheet.
+class _MapFilterMenu extends StatefulWidget {
+  final PostFilter filter;
+  final ValueChanged<MediaType> onToggleType;
+  const _MapFilterMenu({required this.filter, required this.onToggleType});
+
+  @override
+  State<_MapFilterMenu> createState() => _MapFilterMenuState();
+}
+
+class _MapFilterMenuState extends State<_MapFilterMenu> {
+  bool _open = false;
+
+  void _setOpen(bool open) => setState(() => _open = open);
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    final filter = widget.filter;
+
+    return PopScope(
+      // The back button closes the dropdown before it does anything else.
+      canPop: !_open,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _setOpen(false);
+      },
+      child: TapRegion(
+        onTapOutside: (_) {
+          if (_open) _setOpen(false);
+        },
+        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+          _MapButton(
+            icon: _open
+                ? Icons.close_rounded
+                : (filter.isActive ? Icons.filter_alt_rounded : Icons.tune_rounded),
+            highlighted: filter.isActive,
+            tooltip: l.filters,
+            onPressed: () => _setOpen(!_open),
+          ),
+          Flexible(
+            child: AnimatedSize(
+              duration: const Duration(milliseconds: 160),
+              curve: Curves.easeOut,
+              alignment: Alignment.topLeft,
+              child: !_open
+                  ? const SizedBox(width: 48)
+                  : Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: SizedBox(
+                        width: 210,
+                        child: GlassPanel(
+                          borderRadius: BorderRadius.circular(20),
+                          strong: true,
+                          shadow: false,
+                          // Scrolls on very short screens, like a phone held sideways.
+                          child: SingleChildScrollView(
+                            padding: const EdgeInsets.symmetric(vertical: 6),
+                            child: Column(mainAxisSize: MainAxisSize.min, children: [
+                              for (final type in MediaType.values)
+                                _FilterRow(
+                                  icon: mediaIcon(type),
+                                  color: AppTheme.mediaColor(type),
+                                  label: mediaLabel(context, type),
+                                  selected: filter.types.contains(type),
+                                  onTap: () => widget.onToggleType(type),
+                                ),
+                              const Divider(height: 9, indent: 14, endIndent: 14),
+                              _FilterRow(
+                                icon: Icons.tune_rounded,
+                                label: l.moreFilters,
+                                trailing: Icons.chevron_right_rounded,
+                                onTap: () {
+                                  _setOpen(false);
+                                  showFilterSheet(context);
+                                },
+                              ),
+                            ]),
+                          ),
+                        ),
+                      ),
+                    ),
+            ),
+          ),
+        ]),
+      ),
+    );
+  }
+}
+
+class _FilterRow extends StatelessWidget {
+  final IconData icon;
+  final Color? color;
+  final String label;
   final bool selected;
-  final bool showLabel;
+  final IconData? trailing;
   final VoidCallback onTap;
-  const _TypeChip({required this.type, required this.selected, required this.showLabel, required this.onTap});
+
+  const _FilterRow({
+    required this.icon,
+    this.color,
+    required this.label,
+    this.selected = false,
+    this.trailing,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final color = AppTheme.mediaColor(type);
-    final label = mediaLabel(context, type);
-    return Tooltip(message: label, child: Material(
-      color: selected ? color : scheme.surface,
-      elevation: 3,
-      shadowColor: Colors.black38,
-      borderRadius: BorderRadius.circular(22),
+    return Semantics(
+      selected: selected,
       child: InkWell(
-        borderRadius: BorderRadius.circular(22),
         onTap: onTap,
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: showLabel ? 12 : 13, vertical: showLabel ? 10 : 13),
-          child: Row(mainAxisSize: MainAxisSize.min, children: [
-            Icon(mediaIcon(type), size: 20, color: selected ? Colors.white : color),
-            if (showLabel) ...[
-              const SizedBox(width: 6),
-              Text(label, style: TextStyle(fontWeight: FontWeight.w600, color: selected ? Colors.white : scheme.onSurface)),
-            ],
-          ]),
+        child: SizedBox(
+          height: 46,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            child: Row(children: [
+              Icon(icon, size: 22, color: color ?? scheme.onSurface),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontWeight: selected ? FontWeight.w700 : FontWeight.w500, color: scheme.onSurface),
+                ),
+              ),
+              if (selected) Icon(Icons.check_rounded, size: 20, color: scheme.primary),
+              if (trailing != null) Icon(trailing, size: 20, color: scheme.onSurfaceVariant),
+            ]),
+          ),
         ),
       ),
-    ));
+    );
   }
 }
 
@@ -303,7 +409,8 @@ class _ClusterBubble extends StatelessWidget {
 /// Teardrop-style pin coloured by content type; the tip points at the location.
 class _PostPin extends StatelessWidget {
   final MediaType? type;
-  const _PostPin({required this.type});
+  final bool tip;
+  const _PostPin({required this.type, this.tip = true});
 
   @override
   Widget build(BuildContext context) {
@@ -320,7 +427,7 @@ class _PostPin extends StatelessWidget {
         ),
         child: Icon(mediaIcon(type), color: Colors.white, size: 20),
       ),
-      CustomPaint(size: const Size(12, 8), painter: _PinTip(color)),
+      if (tip) CustomPaint(size: const Size(12, 8), painter: _PinTip(color)),
     ]);
   }
 }

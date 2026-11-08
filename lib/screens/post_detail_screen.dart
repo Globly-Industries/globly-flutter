@@ -7,6 +7,7 @@ import '../models/models.dart';
 import '../state/auth_state.dart';
 import '../widgets/common.dart';
 import '../widgets/errors.dart';
+import '../widgets/glass.dart';
 import '../widgets/media_view.dart';
 
 const quickEmoji = ['👍', '❤️', '😂', '😮', '😢', '🔥'];
@@ -221,8 +222,9 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       onPopInvokedWithResult: (didPop, _) {
         if (!didPop) Navigator.pop(context, _changed);
       },
-      child: Scaffold(
-        appBar: AppBar(
+      child: GlassScaffold(
+        behindBar: true,
+        appBar: GlassAppBar(
           actions: [
             if (post != null) _menu(post, auth),
             const SizedBox(width: 4),
@@ -234,7 +236,11 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                     ? EmptyState(icon: Icons.error_outline_rounded, title: errorMessage(context, _error!))
                     : const CircularProgressIndicator(),
               )
-            : RefreshIndicator(onRefresh: _load, child: _body(post, auth, l)),
+            // Builder: only below the scaffold does MediaQuery include the app bar.
+            : Builder(builder: (context) {
+                final insets = MediaQuery.paddingOf(context);
+                return RefreshIndicator(onRefresh: _load, edgeOffset: insets.top, child: _body(post, auth, l, insets));
+              }),
       ),
     );
   }
@@ -257,12 +263,12 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     );
   }
 
-  Widget _body(Post post, AuthState auth, AppLocalizations l) {
+  Widget _body(Post post, AuthState auth, AppLocalizations l, EdgeInsets insets) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
 
     return ListView(
-      padding: const EdgeInsets.only(bottom: 32),
+      padding: EdgeInsets.only(top: insets.top + 8, bottom: insets.bottom + 32),
       children: [
         ContentWidth(
           child: Padding(
@@ -299,7 +305,9 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
               Wrap(spacing: 8, runSpacing: 8, children: [
                 Pill(
                   icon: Icons.place_rounded,
-                  label: '${post.latitude.toStringAsFixed(4)}, ${post.longitude.toStringAsFixed(4)}',
+                  label: post.locationRadiusMeters != null
+                      ? l.approximateLocation(formatRadius(post.locationRadiusMeters!))
+                      : '${post.latitude.toStringAsFixed(4)}, ${post.longitude.toStringAsFixed(4)}',
                   color: scheme.primary,
                 ),
                 Pill(icon: Icons.visibility_rounded, label: l.viewsCount(post.views), color: scheme.secondary),
@@ -310,7 +318,8 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
               Row(children: [
                 Container(
                   decoration: BoxDecoration(
-                    color: scheme.surfaceContainerHigh,
+                    color: glassTint(context),
+                    border: Border.all(color: glassEdge(context)),
                     borderRadius: BorderRadius.circular(28),
                   ),
                   child: Row(mainAxisSize: MainAxisSize.min, children: [
@@ -420,7 +429,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
-              color: scheme.surfaceContainerHigh,
+              color: glassTint(context),
               borderRadius: const BorderRadius.only(
                 topRight: Radius.circular(16),
                 bottomLeft: Radius.circular(16),

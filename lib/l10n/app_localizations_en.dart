@@ -244,15 +244,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get camera => 'Camera';
-
-  @override
-  String get gallery => 'Gallery';
-
-  @override
-  String get chooseAudio => 'Choose audio file';
-
-  @override
   String get chooseFileFirst => 'Choose a file first.';
 
   @override
@@ -265,6 +256,29 @@ class AppLocalizationsEn extends AppLocalizations {
   String get location => 'Location';
 
   @override
+  String get retake => 'Retake';
+
+  @override
+  String get recording => 'Recording…';
+
+  @override
+  String get stopRecording => 'Stop';
+
+  @override
+  String get microphoneNeeded => 'Allow microphone access to record audio.';
+
+  @override
+  String get captureFailed => 'Could not start recording. Please try again.';
+
+  @override
+  String approximateLocation(String distance) {
+    return 'Within about $distance';
+  }
+
+  @override
+  String get moreFilters => 'More filters';
+
+  @override
   String get whereCaptured => 'Where was this captured?';
 
   @override
@@ -272,15 +286,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get useMyLocation => 'Use my location';
-
-  @override
-  String get pickOnMap => 'Pick on map';
-
-  @override
-  String get tapToChoose => 'Tap to choose a location';
-
-  @override
-  String get done => 'Done';
 
   @override
   String get locationRequired => 'Location is required.';
@@ -293,9 +298,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get locationUnavailable => 'Could not get your location.';
-
-  @override
-  String get pickerFailed => 'Could not open the file picker.';
 
   @override
   String get couldNotLoadVideo => 'Could not load video';

@@ -7,10 +7,31 @@ import '../state/auth_state.dart';
 import '../state/settings_state.dart';
 import '../widgets/common.dart';
 import '../widgets/errors.dart';
+import '../widgets/glass.dart';
 import '../widgets/language_menu.dart';
 import '../widgets/post_card.dart';
 import 'admin_screen.dart';
 import 'post_detail_screen.dart';
+
+/// Top-right button opening the profile: the user's avatar, or a person icon for guests.
+class ProfileButton extends StatelessWidget {
+  /// Puts the button on its own frosted pane, for use directly on the map.
+  final bool glass;
+  const ProfileButton({super.key, this.glass = false});
+
+  @override
+  Widget build(BuildContext context) {
+    final user = context.select<AuthState, String?>((auth) => auth.user?.userName);
+    final button = IconButton(
+      tooltip: context.l10n.navProfile,
+      icon: user == null ? const Icon(Icons.person_outline_rounded) : UserAvatar(user, radius: 14),
+      onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileScreen())),
+    );
+    return glass
+        ? GlassPanel(borderRadius: BorderRadius.circular(16), shadow: false, tint: glassButtonTint(context), child: button)
+        : button;
+  }
+}
 
 /// Profile management: account, language, the user's own posts (open to edit/delete).
 class ProfileScreen extends StatefulWidget {
@@ -57,25 +78,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final auth = context.watch<AuthState>();
     _ensureLoaded(auth.isSignedIn ? auth.user?.id : null);
 
-    return Scaffold(
-      appBar: AppBar(title: Text(l.navProfile)),
-      body: RefreshIndicator(
-        onRefresh: auth.isSignedIn ? _load : () async {},
-        child: ListView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(12, 4, 12, 32),
-          children: [
-            ContentWidth(
-              child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                if (auth.isSignedIn) _header(auth) else _guestCard(auth),
-                const SizedBox(height: 12),
-                _settingsCard(auth),
-                if (auth.isSignedIn) ..._myPosts(),
-              ]),
-            ),
-          ],
-        ),
-      ),
+    return GlassScaffold(
+      behindBar: true,
+      appBar: GlassAppBar(title: Text(l.navProfile)),
+      // Builder: only below the scaffold does MediaQuery include the app and bottom bars.
+      body: Builder(builder: (context) {
+        final insets = MediaQuery.paddingOf(context);
+        return RefreshIndicator(
+          onRefresh: auth.isSignedIn ? _load : () async {},
+          edgeOffset: insets.top,
+          child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: EdgeInsets.fromLTRB(12, insets.top + 8, 12, insets.bottom + 24),
+            children: [
+              ContentWidth(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                  if (auth.isSignedIn) _header(auth) else _guestCard(auth),
+                  const SizedBox(height: 12),
+                  _settingsCard(auth),
+                  if (auth.isSignedIn) ..._myPosts(),
+                ]),
+              ),
+            ],
+          ),
+        );
+      }),
     );
   }
 

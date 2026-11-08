@@ -63,6 +63,9 @@ class Post {
   final Media? media;
   final double latitude;
   final double longitude;
+
+  /// Null when precise; otherwise the location is only known to within this many meters.
+  final int? locationRadiusMeters;
   final int views;
   final int upvotes;
   final int downvotes;
@@ -83,6 +86,7 @@ class Post {
     required this.media,
     required this.latitude,
     required this.longitude,
+    this.locationRadiusMeters,
     required this.views,
     required this.upvotes,
     required this.downvotes,
@@ -106,6 +110,7 @@ class Post {
         media: j['media'] == null ? null : Media.fromJson(j['media']),
         latitude: (j['latitude'] as num).toDouble(),
         longitude: (j['longitude'] as num).toDouble(),
+        locationRadiusMeters: j['locationRadiusMeters'],
         views: j['views'],
         upvotes: j['upvotes'],
         downvotes: j['downvotes'],
@@ -127,6 +132,7 @@ class Post {
         media: media,
         latitude: latitude,
         longitude: longitude,
+        locationRadiusMeters: locationRadiusMeters,
         views: views,
         upvotes: upvotes ?? this.upvotes,
         downvotes: downvotes ?? this.downvotes,
@@ -149,7 +155,18 @@ class MapPoint {
   final MediaType? mediaType;
   final String? title;
 
-  const MapPoint(this.latitude, this.longitude, this.count, this.postId, this.mediaType, this.title);
+  /// Null when precise; otherwise a single post's location is only known to within this many meters.
+  final int? locationRadiusMeters;
+
+  const MapPoint(
+    this.latitude,
+    this.longitude,
+    this.count,
+    this.postId,
+    this.mediaType,
+    this.title, [
+    this.locationRadiusMeters,
+  ]);
 
   bool get isCluster => count > 1;
 
@@ -160,6 +177,7 @@ class MapPoint {
         j['postId'],
         j['mediaType'] == null ? null : MediaType.fromApi(j['mediaType']),
         j['title'],
+        j['locationRadiusMeters'],
       );
 }
 

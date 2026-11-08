@@ -244,15 +244,6 @@ class AppLocalizationsLv extends AppLocalizations {
   }
 
   @override
-  String get camera => 'Kamera';
-
-  @override
-  String get gallery => 'Galerija';
-
-  @override
-  String get chooseAudio => 'Izvēlēties audio failu';
-
-  @override
   String get chooseFileFirst => 'Vispirms izvēlieties failu.';
 
   @override
@@ -265,6 +256,31 @@ class AppLocalizationsLv extends AppLocalizations {
   String get location => 'Atrašanās vieta';
 
   @override
+  String get retake => 'Uzņemt vēlreiz';
+
+  @override
+  String get recording => 'Notiek ieraksts…';
+
+  @override
+  String get stopRecording => 'Apturēt';
+
+  @override
+  String get microphoneNeeded =>
+      'Atļaujiet piekļuvi mikrofonam, lai ierakstītu audio.';
+
+  @override
+  String get captureFailed =>
+      'Neizdevās sākt ierakstu. Lūdzu, mēģiniet vēlreiz.';
+
+  @override
+  String approximateLocation(String distance) {
+    return 'Aptuveni $distance rādiusā';
+  }
+
+  @override
+  String get moreFilters => 'Citi filtri';
+
+  @override
   String get whereCaptured => 'Kur tas tika uzņemts?';
 
   @override
@@ -272,15 +288,6 @@ class AppLocalizationsLv extends AppLocalizations {
 
   @override
   String get useMyLocation => 'Izmantot manu atrašanās vietu';
-
-  @override
-  String get pickOnMap => 'Izvēlēties kartē';
-
-  @override
-  String get tapToChoose => 'Pieskarieties, lai izvēlētos vietu';
-
-  @override
-  String get done => 'Gatavs';
 
   @override
   String get locationRequired => 'Atrašanās vieta ir obligāta.';
@@ -294,9 +301,6 @@ class AppLocalizationsLv extends AppLocalizations {
 
   @override
   String get locationUnavailable => 'Neizdevās noteikt atrašanās vietu.';
-
-  @override
-  String get pickerFailed => 'Neizdevās atvērt failu izvēli.';
 
   @override
   String get couldNotLoadVideo => 'Neizdevās ielādēt video';

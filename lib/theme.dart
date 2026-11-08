@@ -2,43 +2,59 @@ import 'package:flutter/material.dart';
 
 import 'models/models.dart';
 
-/// Visual identity: an ocean-blue primary with rounded, flat surfaces.
+/// Visual identity: a fresh green primary on soft, frosted-glass surfaces.
 class AppTheme {
-  static const seed = Color(0xFF1565C0);
+  /// Main brand green. Dark enough for white text on buttons (about 5:1 contrast).
+  static const brand = Color(0xFF15803D);
+
+  /// Brighter green for the dark theme and for gradients.
+  static const brandLight = Color(0xFF22C55E);
+
+  /// Fixed background of the login screen, readable in both light and dark mode.
+  static const brandGradient = [Color(0xFF136F36), Color(0xFF15803D)];
 
   static ThemeData light() => _build(Brightness.light);
   static ThemeData dark() => _build(Brightness.dark);
 
   static ThemeData _build(Brightness brightness) {
-    final scheme = ColorScheme.fromSeed(seedColor: seed, brightness: brightness);
-    final rounded = RoundedRectangleBorder(borderRadius: BorderRadius.circular(14));
+    final isDark = brightness == Brightness.dark;
+    final scheme = ColorScheme.fromSeed(
+      seedColor: brand,
+      brightness: brightness,
+      dynamicSchemeVariant: DynamicSchemeVariant.fidelity,
+    ).copyWith(
+      primary: isDark ? const Color(0xFF4ADE80) : brand,
+      onPrimary: isDark ? const Color(0xFF052E16) : Colors.white,
+    );
+    final rounded = RoundedRectangleBorder(borderRadius: BorderRadius.circular(16));
+    // A faint dark line in light mode: on the near-white background a light edge would vanish.
+    final hairline = isDark ? Colors.white.withValues(alpha: 0.10) : Colors.black.withValues(alpha: 0.06);
+    final fieldFill = isDark ? Colors.white.withValues(alpha: 0.06) : Colors.white.withValues(alpha: 0.55);
 
     return ThemeData(
       useMaterial3: true,
       colorScheme: scheme,
-      scaffoldBackgroundColor: scheme.surface,
+      scaffoldBackgroundColor: isDark ? const Color(0xFF0F1412) : const Color(0xFFF1F3F2),
       appBarTheme: AppBarTheme(
-        backgroundColor: scheme.surface,
+        backgroundColor: Colors.transparent,
         surfaceTintColor: Colors.transparent,
-        scrolledUnderElevation: 1,
-        titleTextStyle: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: scheme.onSurface),
+        scrolledUnderElevation: 0,
+        titleTextStyle: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: scheme.onSurface),
       ),
+      // Translucent over the soft app background; see GlassPanel for why cards skip the real blur.
       cardTheme: CardThemeData(
         elevation: 0,
-        color: scheme.surfaceContainerLow,
+        color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.white.withValues(alpha: 0.72),
         margin: EdgeInsets.zero,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-          side: BorderSide(color: scheme.outlineVariant.withValues(alpha: 0.5)),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24), side: BorderSide(color: hairline)),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: scheme.surfaceContainerHighest.withValues(alpha: 0.6),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+        fillColor: fieldFill,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: hairline)),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide(color: scheme.primary, width: 2),
         ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
@@ -48,27 +64,43 @@ class AppTheme {
             textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
-        style: OutlinedButton.styleFrom(minimumSize: const Size(64, 52), shape: rounded),
+        style: OutlinedButton.styleFrom(
+          minimumSize: const Size(64, 52),
+          shape: rounded,
+          backgroundColor: fieldFill,
+          side: BorderSide(color: scheme.outlineVariant.withValues(alpha: 0.6)),
+        ),
       ),
       textButtonTheme: TextButtonThemeData(style: TextButton.styleFrom(shape: rounded)),
-      chipTheme: ChipThemeData(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+      segmentedButtonTheme: SegmentedButtonThemeData(
+        style: ButtonStyle(
+          side: WidgetStatePropertyAll(BorderSide(color: scheme.outlineVariant.withValues(alpha: 0.5))),
+          backgroundColor: WidgetStateProperty.resolveWith(
+            (states) => states.contains(WidgetState.selected) ? scheme.primary : fieldFill,
+          ),
+          foregroundColor: WidgetStateProperty.resolveWith(
+            (states) => states.contains(WidgetState.selected) ? scheme.onPrimary : scheme.onSurface,
+          ),
+          iconColor: WidgetStateProperty.resolveWith(
+            (states) => states.contains(WidgetState.selected) ? scheme.onPrimary : scheme.onSurface,
+          ),
+        ),
+      ),
+      chipTheme: ChipThemeData(
+        backgroundColor: fieldFill,
+        side: BorderSide(color: scheme.outlineVariant.withValues(alpha: 0.5)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
         backgroundColor: scheme.primary,
         foregroundColor: scheme.onPrimary,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        shape: const StadiumBorder(),
       ),
-      navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: scheme.surfaceContainer,
-        indicatorColor: scheme.primaryContainer,
-        labelTextStyle: WidgetStatePropertyAll(TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: scheme.onSurface)),
-      ),
-      navigationRailTheme: NavigationRailThemeData(
-        backgroundColor: scheme.surfaceContainer,
-        indicatorColor: scheme.primaryContainer,
-      ),
+      navigationRailTheme: const NavigationRailThemeData(backgroundColor: Colors.transparent),
+      dialogTheme: DialogThemeData(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24))),
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       ),
       dividerTheme: DividerThemeData(color: scheme.outlineVariant.withValues(alpha: 0.5)),
     );
