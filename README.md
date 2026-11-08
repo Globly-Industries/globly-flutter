@@ -19,6 +19,16 @@ flutter pub get
 
 If pub reports version conflicts with your Flutter version, run `flutter pub upgrade --major-versions`.
 
+### Android build notes
+- Needs the Android SDK (Android Studio), accepted licenses (`flutter doctor --android-licenses`) and
+  NDK 28.2.13676358 (SDK Manager -> SDK Tools -> NDK, "Show Package Details").
+- `pubspec.yaml` overrides `flutter_inappwebview` (used by the Turnstile widget) to the 6.2.0 beta:
+  the stable 6.1.x Android package doesn't build with the current Android Gradle Plugin. Remove the
+  override when 6.2.0 is stable.
+- Build/install: `flutter build apk --release`, then `flutter install` (or `adb install -r
+  build/app/outputs/flutter-apk/app-release.apk`). Release builds use the debug signing key, which
+  is fine for testing but not for the Play Store.
+
 ## Running
 
 Start the API (see its README), then:
@@ -93,8 +103,10 @@ lib/
 ```
 
 ## Notes
-- Map tiles come from the public OpenStreetMap server, which is fine for development but not allowed
-  for production traffic. Switch `AppConfig.tileUrlTemplate` to a provider (MapTiler, Stadia, Thunderforest,
-  or self-hosted) before release.
+- Map tiles come from MapTiler (Streets, plus Streets Dark in dark mode). The key in `lib/config.dart`
+  is restricted to `*.dagnis.my.id` in the MapTiler dashboard; the Android app sends
+  `https://globly.dagnis.my.id/` as `Referer` so the restriction also works there. Any subdomain of
+  dagnis.my.id can use the key; a site on another domain needs its origin added to the key.
+  Free plan: 100,000 tile requests per month.
 - Media is streamed directly from Cloudflare R2 using URLs from the API.
 - Uploads are limited to ~95 MB (Cloudflare request body limit).

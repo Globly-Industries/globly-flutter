@@ -42,3 +42,10 @@ flutter:
   uses-material-design: true
   # Generates lib/l10n/app_localizations*.dart from the .arb files (see l10n.yaml).
   generate: true
+
+# cloudflare_turnstile -> flutter_inappwebview. The stable 6.1.x Android implementation uses
+# getDefaultProguardFile('proguard-android.txt'), which the current Android Gradle Plugin rejects.
+# The 6.2.0 beta family fixes it; all flutter_inappwebview* packages must be on the same release.
+# Remove these overrides once 6.2.0 is published as stable.
+dependency_overrides:
+  flutter_inappwebview: 6.2.0-beta.3

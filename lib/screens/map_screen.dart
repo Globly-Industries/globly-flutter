@@ -9,7 +9,6 @@ import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
 
 import '../api/api_client.dart';
-import '../config.dart';
 import '../models/models.dart';
 import '../state/filter_state.dart';
 import '../theme.dart';
@@ -17,6 +16,7 @@ import '../widgets/common.dart';
 import '../widgets/errors.dart';
 import '../widgets/filter_sheet.dart';
 import '../widgets/location.dart';
+import '../widgets/map_tiles.dart';
 import '../widgets/post_card.dart';
 import 'post_detail_screen.dart';
 
@@ -147,10 +147,7 @@ class MapScreenState extends State<MapScreen> {
             },
           ),
           children: [
-            TileLayer(
-              urlTemplate: AppConfig.tileUrlTemplate,
-              userAgentPackageName: AppConfig.userAgentPackageName,
-            ),
+            const AppTileLayer(),
             MarkerLayer(
               markers: [
                 for (final p in _points)
@@ -171,11 +168,7 @@ class MapScreenState extends State<MapScreen> {
                     ),
               ],
             ),
-            // Bottom-left so the "new post" button doesn't cover it.
-            RichAttributionWidget(
-              alignment: AttributionAlignment.bottomLeft,
-              attributions: [TextSourceAttribution('OpenStreetMap contributors')],
-            ),
+            const AppAttribution(),
           ],
         ),
         if (_loading)

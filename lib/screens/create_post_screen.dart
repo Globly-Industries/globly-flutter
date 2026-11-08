@@ -7,12 +7,12 @@ import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
 
 import '../api/api_client.dart';
-import '../config.dart';
 import '../models/models.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
 import '../widgets/errors.dart';
 import '../widgets/location.dart';
+import '../widgets/map_tiles.dart';
 
 /// Publishing: media (photo / video / audio) or text, tied to where it was captured.
 class CreatePostScreen extends StatefulWidget {
@@ -404,7 +404,8 @@ class _LocationPickerState extends State<_LocationPicker> {
           onTap: (_, point) => setState(() => _picked = point),
         ),
         children: [
-          TileLayer(urlTemplate: AppConfig.tileUrlTemplate, userAgentPackageName: AppConfig.userAgentPackageName),
+          const AppTileLayer(),
+          const AppAttribution(),
           if (_picked != null)
             MarkerLayer(markers: [
               Marker(

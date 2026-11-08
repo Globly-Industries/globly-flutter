@@ -19,7 +19,15 @@ class AppConfig {
   /// Must match the Android applicationId; sent to the OSM tile server.
   static const userAgentPackageName = 'com.globly.globly';
 
-  /// OpenStreetMap's public tiles are fine for development only; switch to a
-  /// tile provider (MapTiler, Stadia, self-hosted...) before release.
-  static const tileUrlTemplate = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+  /// MapTiler API key for map tiles. Map keys are always visible to app users; this one is
+  /// restricted to *.dagnis.my.id in the MapTiler dashboard (Allowed HTTP origins), and the
+  /// Android app sends globly.dagnis.my.id as Referer (see widgets/map_tiles.dart).
+  /// Override with --dart-define=MAPTILER_KEY=... ; empty = fall back to OpenStreetMap tiles.
+  static const mapTilerKey = String.fromEnvironment('MAPTILER_KEY', defaultValue: 'YYYNnzxWYFehPRSPcF8R');
+
+  /// Sent as Referer by the Android app; must match the key's allowed origins (*.dagnis.my.id).
+  static const mapTilerReferer = 'https://globly.dagnis.my.id/';
+
+  /// OpenStreetMap's public tiles: fallback for development only (not allowed for production traffic).
+  static const osmTileUrl = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
 }
