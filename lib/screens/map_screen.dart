@@ -1,14 +1,12 @@
 import 'dart:async';
-import 'dart:math' as math;
-import 'dart:ui' as ui;
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
 
 import '../api/api_client.dart';
+import '../config.dart';
 import '../models/models.dart';
 import '../state/filter_state.dart';
 import '../theme.dart';
@@ -17,7 +15,7 @@ import '../widgets/errors.dart';
 import '../widgets/filter_sheet.dart';
 import '../widgets/glass.dart';
 import '../widgets/location.dart';
-import '../widgets/map_tiles.dart';
+import '../widgets/mapbox_posts_map.dart';
 import '../widgets/post_card.dart';
 import 'post_detail_screen.dart';
 import 'profile_screen.dart';
@@ -26,12 +24,16 @@ import 'profile_screen.dart';
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
 
+  /// Turned off for widget tests (see test/flutter_test_config.dart): the map is a native view.
+  @visibleForTesting
+  static bool showMap = AppConfig.mapboxToken.isNotEmpty;
+
   @override
   State<MapScreen> createState() => MapScreenState();
 }
 
 class MapScreenState extends State<MapScreen> {
-  final _map = MapController();
+  final _mapbox = GlobalKey<MapboxPostsMapState>();
   Timer? _debounce;
   CancelToken? _inFlight;
   List<MapPoint> _points = [];
@@ -50,7 +52,6 @@ class MapScreenState extends State<MapScreen> {
     _filters.removeListener(refresh);
     _debounce?.cancel();
     _inFlight?.cancel();
-    _map.dispose();
     super.dispose();
   }
 
@@ -65,20 +66,24 @@ class MapScreenState extends State<MapScreen> {
     if (!_mapReady) return;
     _inFlight?.cancel();
     final token = _inFlight = CancelToken();
-    final camera = _map.camera;
-    final b = camera.visibleBounds;
+    final api = context.read<ApiClient>();
     setState(() => _loading = true);
     try {
-      final points = await context.read<ApiClient>().mapPoints(
-            minLat: b.south,
-            minLng: b.west,
-            maxLat: b.north,
-            maxLng: b.east,
-            zoom: camera.zoom,
+      final queries = await _mapbox.currentState!.queries();
+      if (token.isCancelled) return;
+      final results = await Future.wait([
+        for (final q in queries)
+          api.mapPoints(
+            minLat: q.minLat,
+            minLng: q.minLng,
+            maxLat: q.maxLat,
+            maxLng: q.maxLng,
+            zoom: q.zoom,
             filter: _filters.filter,
             cancelToken: token,
-          );
-      if (mounted && !token.isCancelled) setState(() => _points = points);
+          ),
+      ]);
+      if (mounted && !token.isCancelled) setState(() => _points = [for (final r in results) ...r]);
     } on DioException {
       // Cancelled because the map moved again.
     } catch (e) {
@@ -91,8 +96,8 @@ class MapScreenState extends State<MapScreen> {
   Future<void> _goToMyLocation() async {
     try {
       final here = await currentLocation();
-      _map.move(here, math.max(_map.camera.zoom, 13));
-      _load();
+      // The camera change triggers the reload.
+      await _mapbox.currentState?.goToLocation(here);
     } catch (e) {
       if (mounted) showMessage(context, e);
     }
@@ -100,8 +105,8 @@ class MapScreenState extends State<MapScreen> {
 
   void _onPointTap(MapPoint p) {
     if (p.isCluster) {
-      _map.move(LatLng(p.latitude, p.longitude), math.min(_map.camera.zoom + 2, 18));
-      _load();
+      // The camera change triggers the reload.
+      _mapbox.currentState?.zoomIntoCluster(LatLng(p.latitude, p.longitude));
     } else {
       _showPreview(p.postId!);
     }
@@ -126,73 +131,21 @@ class MapScreenState extends State<MapScreen> {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final filter = context.watch<FilterState>().filter;
-
     return Stack(
       children: [
-        FlutterMap(
-          mapController: _map,
-          options: MapOptions(
-            initialCenter: const LatLng(35, 15),
-            initialZoom: 2.5,
-            minZoom: 2,
-            maxZoom: 18,
-            interactionOptions: const InteractionOptions(flags: InteractiveFlag.all & ~InteractiveFlag.rotate),
-            onMapReady: () {
+        if (!MapScreen.showMap)
+          const EmptyState(icon: Icons.map_outlined, title: 'Map unavailable: built without MAPBOX_TOKEN')
+        else
+          MapboxPostsMap(
+            key: _mapbox,
+            points: _points,
+            onPointTap: _onPointTap,
+            onMoved: _onMoved,
+            onReady: () {
               _mapReady = true;
               _load();
             },
-            onPositionChanged: (_, hasGesture) {
-              if (hasGesture) _onMoved();
-            },
           ),
-          children: [
-            const AppTileLayer(),
-            // Posts from devices that only share an approximate location show the area they are in.
-            CircleLayer(
-              circles: [
-                for (final p in _points)
-                  if (!p.isCluster && p.locationRadiusMeters != null)
-                    CircleMarker(
-                      point: LatLng(p.latitude, p.longitude),
-                      radius: p.locationRadiusMeters!.toDouble(),
-                      useRadiusInMeter: true,
-                      color: AppTheme.mediaColor(p.mediaType).withValues(alpha: 0.16),
-                      borderColor: AppTheme.mediaColor(p.mediaType).withValues(alpha: 0.55),
-                      borderStrokeWidth: 1.5,
-                    ),
-              ],
-            ),
-            MarkerLayer(
-              markers: [
-                for (final p in _points)
-                  if (p.isCluster)
-                    Marker(
-                      point: LatLng(p.latitude, p.longitude),
-                      width: _clusterSize(p.count),
-                      height: _clusterSize(p.count),
-                      child: GestureDetector(onTap: () => _onPointTap(p), child: _ClusterBubble(count: p.count)),
-                    )
-                  else if (p.locationRadiusMeters != null)
-                    // No pointed tip: this is the middle of an area, not an exact spot.
-                    Marker(
-                      point: LatLng(p.latitude, p.longitude),
-                      width: 44,
-                      height: 44,
-                      child: GestureDetector(onTap: () => _onPointTap(p), child: _PostPin(type: p.mediaType, tip: false)),
-                    )
-                  else
-                    Marker(
-                      point: LatLng(p.latitude, p.longitude),
-                      width: 44,
-                      height: 52,
-                      alignment: Alignment.topCenter,
-                      child: GestureDetector(onTap: () => _onPointTap(p), child: _PostPin(type: p.mediaType)),
-                    ),
-              ],
-            ),
-            const AppAttribution(),
-          ],
-        ),
         if (_loading)
           const Positioned(top: 0, left: 0, right: 0, child: LinearProgressIndicator(minHeight: 3)),
         SafeArea(
@@ -217,8 +170,6 @@ class MapScreenState extends State<MapScreen> {
       ],
     );
   }
-
-  static double _clusterSize(int count) => 40 + math.min(28, math.log(count) * 6);
 }
 
 class _MapButton extends StatelessWidget {
@@ -381,73 +332,6 @@ class _FilterRow extends StatelessWidget {
       ),
     );
   }
-}
-
-class _ClusterBubble extends StatelessWidget {
-  final int count;
-  const _ClusterBubble({required this.count});
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Container(
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: scheme.primary,
-        shape: BoxShape.circle,
-        border: Border.all(color: Colors.white, width: 3),
-        boxShadow: [BoxShadow(color: scheme.primary.withValues(alpha: 0.35), blurRadius: 10, spreadRadius: 4)],
-      ),
-      child: Text(
-        count > 999 ? '${(count / 1000).toStringAsFixed(count < 10000 ? 1 : 0)}k' : '$count',
-        style: TextStyle(color: scheme.onPrimary, fontWeight: FontWeight.w800),
-      ),
-    );
-  }
-}
-
-/// Teardrop-style pin coloured by content type; the tip points at the location.
-class _PostPin extends StatelessWidget {
-  final MediaType? type;
-  final bool tip;
-  const _PostPin({required this.type, this.tip = true});
-
-  @override
-  Widget build(BuildContext context) {
-    final color = AppTheme.mediaColor(type);
-    return Column(mainAxisSize: MainAxisSize.min, children: [
-      Container(
-        width: 40,
-        height: 40,
-        decoration: BoxDecoration(
-          color: color,
-          shape: BoxShape.circle,
-          border: Border.all(color: Colors.white, width: 3),
-          boxShadow: const [BoxShadow(blurRadius: 6, color: Colors.black38, offset: Offset(0, 2))],
-        ),
-        child: Icon(mediaIcon(type), color: Colors.white, size: 20),
-      ),
-      if (tip) CustomPaint(size: const Size(12, 8), painter: _PinTip(color)),
-    ]);
-  }
-}
-
-class _PinTip extends CustomPainter {
-  final Color color;
-  _PinTip(this.color);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final path = ui.Path()
-      ..moveTo(0, 0)
-      ..lineTo(size.width, 0)
-      ..lineTo(size.width / 2, size.height)
-      ..close();
-    canvas.drawPath(path, Paint()..color = color);
-  }
-
-  @override
-  bool shouldRepaint(_PinTip old) => old.color != color;
 }
 
 /// Bottom-sheet preview of a post tapped on the map.

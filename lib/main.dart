@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' show MapboxOptions;
 import 'package:provider/provider.dart';
 
 import 'api/api_client.dart';
+import 'config.dart';
 import 'l10n/app_localizations.dart';
 import 'screens/home_shell.dart';
 import 'screens/login_screen.dart';
@@ -13,6 +15,7 @@ import 'theme.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+  MapboxOptions.setAccessToken(AppConfig.mapboxToken);
   final api = ApiClient();
   final auth = AuthState(api)..restore();
   final settings = SettingsState()..load();

@@ -15,17 +15,17 @@ const double glassBlurSigma = 18;
 ui.ImageFilter get _blur => ui.ImageFilter.blur(sigmaX: glassBlurSigma, sigmaY: glassBlurSigma);
 
 /// Fill colour of a glass surface. [strong] is for panels holding a lot of text over busy content.
-Color glassTint(BuildContext context, {bool strong = false}) {
-  final dark = Theme.of(context).brightness == Brightness.dark;
-  return dark
-      ? const Color(0xFF16201A).withValues(alpha: strong ? 0.78 : 0.55)
-      : Colors.white.withValues(alpha: strong ? 0.82 : 0.58);
-}
+///
+/// The map is a native view that Flutter's blur can't reach, so what is behind a panel stays sharp.
+/// The fills are nearly solid to keep panels readable without the blur.
+Color glassTint(BuildContext context, {bool strong = false}) =>
+    (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF16201A) : Colors.white)
+        .withValues(alpha: strong ? 0.95 : 0.9);
 
-/// Very light fill for small buttons floating on the map; mostly just the blur shows.
-Color glassButtonTint(BuildContext context) => Theme.of(context).brightness == Brightness.dark
-    ? const Color(0xFF16201A).withValues(alpha: 0.28)
-    : Colors.white.withValues(alpha: 0.28);
+/// Fill for small buttons floating on the map; solid enough to stand out without the blur.
+Color glassButtonTint(BuildContext context) =>
+    (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF16201A) : Colors.white)
+        .withValues(alpha: 0.85);
 
 /// Thin light edge that makes glass surfaces read as raised panes.
 Color glassEdge(BuildContext context) => Theme.of(context).brightness == Brightness.dark

@@ -16,18 +16,10 @@ class AppConfig {
   /// hostname must be listed in the Turnstile widget's domains in the Cloudflare dashboard.
   static const turnstileBaseUrl = 'https://globly.dagnis.my.id/';
 
-  /// Must match the Android applicationId; sent to the OSM tile server.
-  static const userAgentPackageName = 'com.globly.globly';
-
-  /// MapTiler API key for map tiles. Map keys are always visible to app users; this one is
-  /// restricted to *.dagnis.my.id in the MapTiler dashboard (Allowed HTTP origins), and the
-  /// Android app sends globly.dagnis.my.id as Referer (see widgets/map_tiles.dart).
-  /// Override with --dart-define=MAPTILER_KEY=... ; empty = fall back to OpenStreetMap tiles.
-  static const mapTilerKey = String.fromEnvironment('MAPTILER_KEY', defaultValue: 'YYYNnzxWYFehPRSPcF8R');
-
-  /// Sent as Referer by the Android app; must match the key's allowed origins (*.dagnis.my.id).
-  static const mapTilerReferer = 'https://globly.dagnis.my.id/';
-
-  /// OpenStreetMap's public tiles: fallback for development only (not allowed for production traffic).
-  static const osmTileUrl = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+  /// Public Mapbox token. These are made to be visible to app users, so it lives in the repo.
+  /// Override with --dart-define=MAPBOX_TOKEN=... ; empty = no map, only a message.
+  static const mapboxToken = String.fromEnvironment(
+    'MAPBOX_TOKEN',
+    defaultValue: 'pk.eyJ1IjoiZHJyZW1lc2lzIiwiYSI6ImNtdzd0ZGU5ZzB3MmMyeHNlb2V4Y2IyZnAifQ.4xqPdG58FbjbPtz6JKzv4g',
+  );
 }

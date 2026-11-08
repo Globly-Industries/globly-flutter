@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 
@@ -22,6 +23,24 @@ Future<bool> _isApproximate() async {
     return await Geolocator.getLocationAccuracy() == LocationAccuracyStatus.reduced;
   } catch (_) {
     return false;
+  }
+}
+
+/// The device position if it can be had without prompting the user and within a moment; else null.
+Future<LatLng?> knownLocationWithoutAsking() async {
+  try {
+    if (!await Geolocator.isLocationServiceEnabled()) return null;
+    final permission = await Geolocator.checkPermission();
+    if (permission != LocationPermission.always && permission != LocationPermission.whileInUse) return null;
+    // Not available on web, which goes straight to asking for a fresh position.
+    final last = kIsWeb ? null : await Geolocator.getLastKnownPosition();
+    final pos = last ??
+        await Geolocator.getCurrentPosition(
+          locationSettings: const LocationSettings(accuracy: LocationAccuracy.low, timeLimit: Duration(seconds: 2)),
+        );
+    return LatLng(pos.latitude, pos.longitude);
+  } catch (_) {
+    return null;
   }
 }
 
