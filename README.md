@@ -93,7 +93,7 @@ lib/
   screens/
     login_screen         register / sign in / browse anonymously
     home_shell           bottom bar: Map, Feed + post wheel; profile opens from the top right
-    map_screen           flutter_map + server-side clusters, tap to zoom/open
+    map_screen           Mapbox globe + server-side clusters, tap to zoom/open
     feed_screen          newest (paged) or nearby
     post_detail_screen   media playback, votes, emoji, comments, report, edit/delete
     create_post_screen   post form for captured media (retake), current GPS location, upload with progress
@@ -106,10 +106,8 @@ lib/
 - If a user gives the app only an approximate location (Android 12+ / iOS permission prompt), posts
   send a radius and show as an area on the map instead of a pin. The app can't request this per post:
   once precise access is granted it gets the precise position.
-- Map tiles come from MapTiler (Streets, plus Streets Dark in dark mode). The key in `lib/config.dart`
-  is restricted to `*.dagnis.my.id` in the MapTiler dashboard; the Android app sends
-  `https://globly.dagnis.my.id/` as `Referer` so the restriction also works there. Any subdomain of
-  dagnis.my.id can use the key; a site on another domain needs its origin added to the key.
-  Free plan: 100,000 tile requests per month.
+- The map is Mapbox's Standard style, with its day or night lighting following the app theme. The
+  public token is in `lib/config.dart`; override it with `--dart-define=MAPBOX_TOKEN=...`. Free tier:
+  25,000 monthly active users on mobile and 50,000 map loads per month on web.
 - Media is streamed directly from Cloudflare R2 using URLs from the API.
 - Uploads are limited to ~95 MB (Cloudflare request body limit).

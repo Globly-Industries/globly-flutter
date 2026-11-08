@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'models/models.dart';
@@ -16,6 +17,13 @@ class AppTheme {
   static ThemeData light() => _build(Brightness.light);
   static ThemeData dark() => _build(Brightness.dark);
 
+  /// On web the default transition scales the page below by 10%. The map measures itself on screen,
+  /// so it would keep that size afterwards, drawing everything too large and off-centre.
+  /// This one leaves the page below untouched.
+  static final _webPageTransitions = PageTransitionsTheme(builders: {
+    for (final platform in TargetPlatform.values) platform: const FadeUpwardsPageTransitionsBuilder(),
+  });
+
   static ThemeData _build(Brightness brightness) {
     final isDark = brightness == Brightness.dark;
     final scheme = ColorScheme.fromSeed(
@@ -32,6 +40,7 @@ class AppTheme {
     final fieldFill = isDark ? Colors.white.withValues(alpha: 0.06) : Colors.white.withValues(alpha: 0.55);
 
     return ThemeData(
+      pageTransitionsTheme: kIsWeb ? _webPageTransitions : null,
       useMaterial3: true,
       colorScheme: scheme,
       scaffoldBackgroundColor: isDark ? const Color(0xFF0F1412) : const Color(0xFFF1F3F2),
