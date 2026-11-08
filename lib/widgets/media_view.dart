@@ -82,9 +82,11 @@ class _VideoViewState extends State<_VideoView> {
       child: Stack(
         alignment: Alignment.bottomCenter,
         children: [
-          GestureDetector(
-            onTap: _togglePlaying,
-            child: VideoPlayer(_controller),
+          VideoPlayer(_controller),
+          // Above the video, not around it: on web the video is a platform view, which would
+          // win the tap over a GestureDetector wrapping it.
+          Positioned.fill(
+            child: GestureDetector(behavior: HitTestBehavior.opaque, onTap: _togglePlaying),
           ),
           if (!_controller.value.isPlaying)
             // Only an indicator: taps on it must reach the video underneath.

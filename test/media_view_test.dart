@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:globly/l10n/app_localizations.dart';
@@ -57,9 +59,26 @@ class _FakePlayer extends VideoPlayerPlatform with MockPlatformInterfaceMixin {
   Future<void> setMixWithOthers(bool mixWithOthers) async {}
 
   @override
-  // Fills its space and takes touches, as a real video surface does.
-  Widget buildViewWithOptions(VideoViewOptions options) =>
-      const ColoredBox(color: Colors.black, child: SizedBox.expand());
+  // A real platform view, as on web: it enters the gesture arena and takes touches.
+  Widget buildViewWithOptions(VideoViewOptions options) => PlatformViewSurface(
+        controller: _FakePlatformViewController(),
+        hitTestBehavior: PlatformViewHitTestBehavior.opaque,
+        gestureRecognizers: const {},
+      );
+}
+
+class _FakePlatformViewController extends PlatformViewController {
+  @override
+  int get viewId => 0;
+
+  @override
+  Future<void> clearFocus() async {}
+
+  @override
+  Future<void> dispatchPointerEvent(PointerEvent event) async {}
+
+  @override
+  Future<void> dispose() async {}
 }
 
 void main() {
