@@ -131,6 +131,9 @@ lib/
 ```
 
 ## Notes
+- `assets/logo.svg` is the source logo. It isn't bundled: the app uses `assets/logo.png`, Android
+  `res/drawable/ic_launcher_foreground.xml` + `res/mipmap-*`, and web `web/favicon.png` + `web/icons/`.
+  These were generated from the SVG, so regenerate them if the logo changes.
 - If a user gives the app only an approximate location (Android 12+ / iOS permission prompt), posts
   send a radius and show as an area on the map instead of a pin. The app can't request this per post:
   once precise access is granted it gets the precise position.

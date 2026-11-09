@@ -103,7 +103,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     Container(
                       padding: const EdgeInsets.all(18),
                       decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.15), shape: BoxShape.circle),
-                      child: const Icon(Icons.public_rounded, size: 56, color: Colors.white),
+                      child: Image.asset('assets/logo.png', width: 56, height: 56, color: Colors.white),
                     ),
                     const SizedBox(height: 12),
                     Text(l.appTitle,

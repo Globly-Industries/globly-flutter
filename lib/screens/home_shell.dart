@@ -108,7 +108,7 @@ class _HomeShellState extends State<HomeShell> {
                     leading: Padding(
                       padding: const EdgeInsets.only(top: 8, bottom: 16),
                       child: Column(children: [
-                        Icon(Icons.public_rounded, size: 32, color: Theme.of(context).colorScheme.primary),
+                        Image.asset('assets/logo.png', width: 32, height: 32, color: Theme.of(context).colorScheme.primary),
                         const SizedBox(height: 16),
                         _postButton(wheelFansRight, 56),
                       ]),
