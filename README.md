@@ -26,8 +26,36 @@ If pub reports version conflicts with your Flutter version, run `flutter pub upg
   the stable 6.1.x Android package doesn't build with the current Android Gradle Plugin. Remove the
   override when 6.2.0 is stable.
 - Build/install: `flutter build apk --release`, then `flutter install` (or `adb install -r
-  build/app/outputs/flutter-apk/app-release.apk`). Release builds use the debug signing key, which
-  is fine for testing but not for the Play Store.
+  build/app/outputs/flutter-apk/app-release.apk`). Local release builds use the debug signing key
+  unless `android/key.properties` exists.
+
+## Android releases
+
+Pushing a version tag builds a signed APK and publishes it as a GitHub release
+(`.github/workflows/android-release.yml`):
+
+```bash
+git tag v0.1.1
+git push origin v0.1.1
+```
+
+To install, open the release on the phone, download the `.apk` and allow installs from that app when
+Android asks. Later releases install as updates over the old one.
+
+One-time setup: create an upload key with a letters-and-digits password, and back up the file and
+password outside the repo. If the key is lost, testers have to uninstall to move to a new one.
+
+```bash
+keytool -genkeypair -keystore upload.jks -alias upload -keyalg RSA -keysize 4096 -validity 10000
+```
+
+Add these repository secrets under Settings -> Secrets and variables -> Actions:
+
+| Secret | Value |
+| --- | --- |
+| `ANDROID_KEYSTORE_BASE64` | output of `base64 -w0 upload.jks` |
+| `ANDROID_KEYSTORE_PASSWORD` | the keystore password |
+| `ANDROID_KEY_ALIAS` | `upload` |
 
 ## Running
 

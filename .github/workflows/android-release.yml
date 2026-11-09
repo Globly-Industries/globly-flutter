@@ -1,0 +1,72 @@
+# Pushing a version tag (git tag v0.1.1 && git push origin v0.1.1) builds a signed APK and publishes
+# it as a GitHub release. Setup and required secrets: see "Android releases" in the README.
+name: Android release
+
+on:
+  push:
+    tags: ['v[0-9]+.[0-9]+.[0-9]+']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
+        with:
+          distribution: temurin
+          java-version: '25'
+
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with:
+          flutter-version: '3.47.9'
+          channel: stable
+          cache: true
+
+      - run: flutter pub get
+
+      - run: flutter test
+
+      - name: Write signing config
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ] || [ -z "$KEYSTORE_PASSWORD" ] || [ -z "$KEY_ALIAS" ]; then
+            echo "::error::Signing secrets are missing, see 'Android releases' in the README."
+            exit 1
+          fi
+          echo "$KEYSTORE_BASE64" | base64 --decode > android/app/upload.jks
+          {
+            echo "storeFile=upload.jks"
+            echo "storePassword=$KEYSTORE_PASSWORD"
+            echo "keyAlias=$KEY_ALIAS"
+            echo "keyPassword=$KEYSTORE_PASSWORD"
+          } > android/key.properties
+
+      # android/gradle.properties asks for an 8 GB heap, more than private-repo runners have.
+      - name: Limit Gradle memory
+        run: |
+          mkdir -p ~/.gradle
+          echo "org.gradle.jvmargs=-Xmx4G -XX:MaxMetaspaceSize=2G" >> ~/.gradle/gradle.properties
+
+      # The version name comes from the tag. The run number always increases, so Android accepts
+      # each release as an update.
+      - name: Build APK
+        env:
+          TAG: ${{ github.ref_name }}
+          BUILD_NUMBER: ${{ github.run_number }}
+        run: |
+          flutter build apk --release --build-name="${TAG#v}" --build-number="$BUILD_NUMBER"
+          mv build/app/outputs/flutter-apk/app-release.apk "globly-$TAG.apk"
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: gh release create "$TAG" "globly-$TAG.apk" --title "Globly $TAG" --generate-notes
