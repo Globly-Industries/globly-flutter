@@ -8,6 +8,7 @@ import '../models/models.dart';
 import '../theme.dart';
 import 'common.dart';
 import 'glass.dart';
+import 'goo.dart';
 import 'haptics.dart';
 
 /// Direction the wheel fans out in: up from a bottom bar, right from a side rail.
@@ -68,8 +69,9 @@ class PostWheelButton extends StatefulWidget {
 class _PostWheelButtonState extends State<PostWheelButton> with SingleTickerProviderStateMixin {
   late final _animation = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 220),
-    reverseDuration: const Duration(milliseconds: 120),
+    // Long enough opening to see the options drawn out of the button; closing stays snappy.
+    duration: const Duration(milliseconds: 380),
+    reverseDuration: const Duration(milliseconds: 160),
   );
 
   /// Where the holding finger is; null when the wheel is used by tapping.
@@ -124,6 +126,7 @@ class _PostWheelButtonState extends State<PostWheelButton> with SingleTickerProv
       ),
     );
     Overlay.of(context, rootOverlay: true).insert(overlay);
+    setState(() {}); // Hides this button behind its copy on the wheel.
     final backHandler = _backHandler = LocalHistoryEntry(onRemove: _close);
     _route = ModalRoute.of(context)?..addLocalHistoryEntry(backHandler);
     _animation.forward();
@@ -147,6 +150,7 @@ class _PostWheelButtonState extends State<PostWheelButton> with SingleTickerProv
     overlay.remove();
     _overlay = null;
     _closing = false;
+    if (mounted) setState(() {});
     if (selected != null && mounted) widget.onSelected(selected);
   }
 
@@ -186,7 +190,13 @@ class _PostWheelButtonState extends State<PostWheelButton> with SingleTickerProv
       onLongPressStart: (details) => _press(details.globalPosition),
       onLongPressMoveUpdate: (details) => _move(details.globalPosition),
       onLongPressEnd: (_) => _release(),
-      child: PostButton(onPressed: _open, tooltip: widget.tooltip, size: widget.size),
+      // While the wheel is open its copy of the button stands in for this one. Hidden rather than
+      // removed: it still follows the finger that opened the wheel. Left showing, it would peek
+      // out from behind the copy whenever that squeezes or stretches.
+      child: Opacity(
+        opacity: _overlay == null ? 1 : 0,
+        child: PostButton(onPressed: _open, tooltip: widget.tooltip, size: widget.size),
+      ),
     );
   }
 }
@@ -218,52 +228,32 @@ class _PostWheel extends StatelessWidget {
     return Material(
       type: MaterialType.transparency,
       child: Stack(children: [
-        // Tapping anywhere else closes the wheel.
+        // Tapping anywhere else closes the wheel. The shade pools round the wheel and fades out
+        // towards the edges, so the screen stays in view without competing with the options.
         Positioned.fill(
           child: GestureDetector(
             behavior: HitTestBehavior.opaque,
             onTap: onClose,
             child: FadeTransition(
               opacity: fade,
-              child: BackdropFilter(
-                filter: ui.ImageFilter.blur(sigmaX: 6, sigmaY: 6),
-                child: ColoredBox(color: Colors.black.withValues(alpha: 0.25)),
-              ),
-            ),
-          ),
-        ),
-        Positioned.fill(
-          child: IgnorePointer(
-            child: FadeTransition(
-              opacity: fade,
-              child: CustomPaint(
-                painter: _TrackPainter(
-                  center: center,
-                  from: _optionAngle(0, options.length, direction),
-                  to: _optionAngle(options.length - 1, options.length, direction),
-                  color: glassTint(context),
-                ),
-              ),
+              child: CustomPaint(painter: _ShadePainter(center)),
             ),
           ),
         ),
         ValueListenableBuilder<Offset?>(
           valueListenable: finger,
-          builder: (context, position, _) {
-            final selected = position == null ? null : wheelSelectionAt(position, center, options.length, direction);
-            return AnimatedBuilder(
-              animation: curve,
-              builder: (context, _) => Stack(children: [
-                for (var i = 0; i < options.length; i++)
-                  _positioned(
-                    center + Offset.fromDirection(_optionAngle(i, options.length, direction), _radius * curve.value),
-                    _WheelOption(type: options[i], selected: i == selected, onTap: () => onClose(options[i])),
-                  ),
-              ]),
-            );
-          },
+          builder: (context, position, _) => _GooOptions(
+            options: options,
+            center: center,
+            direction: direction,
+            buttonSize: size,
+            open: curve,
+            selected: position == null ? null : wheelSelectionAt(position, center, options.length, direction),
+            onTap: (type) => onClose(type),
+          ),
         ),
-        // The "+" turned into a close button, in the exact place of the real one.
+        // The "+" turned into a close button, in the exact place of the real one. It reaches after
+        // the finger that is choosing, as if the option were being pulled out of it.
         Positioned(
           left: center.dx - size / 2,
           top: center.dy - size / 2,
@@ -273,22 +263,129 @@ class _PostWheel extends StatelessWidget {
               onPressed: onClose,
               tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
               size: size,
+              reachTowards: finger,
             ),
           ),
         ),
       ]),
     );
   }
-
-  /// Centres the option's circle (not its label) on [at].
-  Widget _positioned(Offset at, Widget child) => Positioned(
-        left: at.dx - _optionSize,
-        top: at.dy - _optionSize / 2,
-        width: _optionSize * 2,
-        child: Opacity(opacity: animation.value.clamp(0.0, 1.0), child: child),
-      );
 }
 
+/// The options as droplets of the same goo as the button. Opening, each is drawn out of the button
+/// on a beaded neck that thins and snaps; closing, they are sucked back in. The option under the
+/// finger swells, fills with its colour and bulges back towards the button.
+class _GooOptions extends StatefulWidget {
+  final List<MediaType> options;
+  final Offset center;
+  final double direction;
+  final double buttonSize;
+  final Animation<double> open;
+  final int? selected;
+  final ValueChanged<MediaType> onTap;
+
+  const _GooOptions({
+    required this.options,
+    required this.center,
+    required this.direction,
+    required this.buttonSize,
+    required this.open,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  State<_GooOptions> createState() => _GooOptionsState();
+}
+
+class _GooOptionsState extends State<_GooOptions> with TickerProviderStateMixin {
+  /// How swollen each option is: 1 while the finger is on it.
+  late final List<AnimationController> _swell = [
+    for (final _ in widget.options)
+      AnimationController(vsync: this, duration: const Duration(milliseconds: 260), reverseDuration: const Duration(milliseconds: 160)),
+  ];
+  late final List<Animation<double>> _swellCurve = [
+    for (final controller in _swell)
+      CurvedAnimation(parent: controller, curve: Curves.elasticOut, reverseCurve: Curves.easeOut),
+  ];
+
+  @override
+  void didUpdateWidget(_GooOptions old) {
+    super.didUpdateWidget(old);
+    if (old.selected == widget.selected) return;
+    for (var i = 0; i < _swell.length; i++) {
+      if (i == widget.selected) {
+        _swell[i].forward();
+      } else {
+        _swell[i].reverse();
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    for (final controller in _swell) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
+
+  Offset _direction(int i) => Offset.fromDirection(_optionAngle(i, widget.options.length, widget.direction));
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final plain = Color.alphaBlend(glassTint(context, strong: true), scheme.surface);
+
+    return AnimatedBuilder(
+      animation: Listenable.merge([widget.open, ..._swellCurve]),
+      builder: (context, _) {
+        final t = widget.open.value;
+        // The labels come in once the droplets are mostly out, so they never sit on a neck.
+        final contentOpacity = ((t - 0.5) / 0.5).clamp(0.0, 1.0);
+        return Stack(children: [
+          Positioned.fill(
+            child: IgnorePointer(
+              child: CustomPaint(
+                painter: _OptionGooPainter(
+                  center: widget.center,
+                  directions: [for (var i = 0; i < widget.options.length; i++) _direction(i)],
+                  buttonSize: widget.buttonSize,
+                  open: t,
+                  swell: [for (final s in _swellCurve) s.value],
+                  colors: [
+                    for (var i = 0; i < widget.options.length; i++)
+                      Color.lerp(plain, AppTheme.mediaColor(widget.options[i]), _swellCurve[i].value.clamp(0.0, 1.0))!,
+                  ],
+                  edge: glassEdge(context),
+                ),
+              ),
+            ),
+          ),
+          for (var i = 0; i < widget.options.length; i++)
+            Positioned(
+              left: widget.center.dx + _direction(i).dx * _radius * t - _optionSize,
+              top: widget.center.dy + _direction(i).dy * _radius * t - _optionSize / 2,
+              width: _optionSize * 2,
+              child: Opacity(
+                opacity: contentOpacity,
+                child: Transform.scale(
+                  scale: 1 + 0.15 * _swellCurve[i].value,
+                  child: _WheelOption(
+                    type: widget.options[i],
+                    selected: i == widget.selected,
+                    onTap: () => widget.onTap(widget.options[i]),
+                  ),
+                ),
+              ),
+            ),
+        ]);
+      },
+    );
+  }
+}
+
+/// An option's icon and label, sitting in its droplet (drawn by [_OptionGooPainter]).
 class _WheelOption extends StatelessWidget {
   final MediaType type;
   final bool selected;
@@ -299,64 +396,122 @@ class _WheelOption extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = AppTheme.mediaColor(type);
     final scheme = Theme.of(context).colorScheme;
-    // The label sits inside the circle, so it is always on one solid surface.
     return Center(
-      child: AnimatedScale(
-        scale: selected ? 1.2 : 1,
-        duration: const Duration(milliseconds: 120),
-        child: GlassPanel(
-          borderRadius: BorderRadius.circular(_optionSize / 2),
-          tint: selected ? color : Color.alphaBlend(glassTint(context, strong: true), scheme.surface),
-          child: InkWell(
-            customBorder: const CircleBorder(),
-            onTap: onTap,
-            child: SizedBox.square(
-              dimension: _optionSize,
-              child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                Icon(mediaIcon(type), size: 26, color: selected ? Colors.white : color),
-                const SizedBox(height: 2),
-                Text(
-                  mediaLabel(context, type),
-                  maxLines: 1,
-                  style: TextStyle(
-                    color: selected ? Colors.white : scheme.onSurface,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ]),
+      child: InkWell(
+        customBorder: const CircleBorder(),
+        onTap: onTap,
+        child: SizedBox.square(
+          dimension: _optionSize,
+          child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+            Icon(mediaIcon(type), size: 26, color: selected ? Colors.white : color),
+            const SizedBox(height: 2),
+            Text(
+              mediaLabel(context, type),
+              maxLines: 1,
+              style: TextStyle(
+                color: selected ? Colors.white : scheme.onSurface,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
             ),
-          ),
+          ]),
         ),
       ),
     );
   }
 }
 
-/// The ring segment the options sit on.
-class _TrackPainter extends CustomPainter {
+class _OptionGooPainter extends CustomPainter {
   final Offset center;
-  final double from;
-  final double to;
-  final Color color;
+  final List<Offset> directions;
+  final double buttonSize;
 
-  _TrackPainter({required this.center, required this.from, required this.to, required this.color});
+  /// How far open the wheel is: 0 shut, 1 open (a little past 1 while overshooting).
+  final double open;
+  final List<double> swell;
+  final List<Color> colors;
+  final Color edge;
+
+  _OptionGooPainter({
+    required this.center,
+    required this.directions,
+    required this.buttonSize,
+    required this.open,
+    required this.swell,
+    required this.colors,
+    required this.edge,
+  });
+
+  /// Where along the way out the neck's beads sit, and how big each starts, as shares.
+  static const _beads = [(along: 0.3, size: 0.42), (along: 0.55, size: 0.34), (along: 0.8, size: 0.28)];
+
+  /// Smallest bead drawn, in logical pixels.
+  static const double _minBead = 6;
 
   @override
   void paint(Canvas canvas, Size size) {
-    canvas.drawArc(
-      Rect.fromCircle(center: center, radius: _radius),
-      from,
-      to - from,
-      false,
+    if (open <= 0) return;
+    final shadow = Paint()
+      ..color = Colors.black.withValues(alpha: 0.14)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
+    final outline = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1
+      ..color = edge;
+
+    for (var i = 0; i < directions.length; i++) {
+      final direction = directions[i];
+      final out = _radius * open;
+      final spot = center + direction * out;
+      final grown = open.clamp(0.0, 1.0);
+      final s = swell[i];
+      final radius = _optionSize / 2 * (0.25 + 0.75 * grown) * (1 + 0.15 * s);
+      // The neck thins as the droplet gets further out, and snaps just as it arrives.
+      final neck = math.pow((1 - grown).clamp(0.0, 1.0), 0.6).toDouble();
+
+      final circles = <GooCircle>[
+        // Where the neck grows out of the button; small enough to stay hidden under it even when
+        // the button leans, and gone once the neck has snapped.
+        if (neck > 0.05) (centre: center, radius: buttonSize / 2 * 0.6),
+        (centre: spot, radius: radius),
+        // Beads too small to read as part of a neck would just look like specks.
+        for (final bead in _beads)
+          if (_optionSize / 2 * bead.size * neck >= _minBead)
+            (centre: center + direction * out * bead.along, radius: _optionSize / 2 * bead.size * neck),
+        // A swollen droplet bulges back towards the button.
+        if (s > 0.05) (centre: spot - direction * radius * 0.75, radius: radius * 0.5 * s.clamp(0.0, 1.2)),
+      ];
+      final path = traceGoo(circles, gooLoneLevel, 2);
+
+      canvas.drawPath(path.shift(const Offset(0, 3)), shadow);
+      canvas.drawPath(path, Paint()..color = colors[i]);
+      canvas.drawPath(path, outline);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_OptionGooPainter old) => true; // Only built while something is changing.
+}
+
+/// A soft shade pooled round the wheel, fading towards the edges of the screen.
+class _ShadePainter extends CustomPainter {
+  final Offset center;
+  _ShadePainter(this.center);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final reach = math.max(_radius * 3.2, size.longestSide * 0.75);
+    canvas.drawRect(
+      Offset.zero & size,
       Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeCap = StrokeCap.round
-        ..strokeWidth = _optionSize + 12
-        ..color = color,
+        ..shader = ui.Gradient.radial(
+          center,
+          reach,
+          [Colors.black.withValues(alpha: 0.42), Colors.black.withValues(alpha: 0.10)],
+        ),
     );
   }
 
   @override
-  bool shouldRepaint(_TrackPainter old) => old.center != center || old.from != from || old.to != to || old.color != color;
+  bool shouldRepaint(_ShadePainter old) => old.center != center;
 }

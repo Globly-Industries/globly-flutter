@@ -230,6 +230,25 @@ void main() {
     expect(find.text('Photo'), findsOneWidget);
   });
 
+  testWidgets('the real button hides while the wheel shows its copy, so it cannot peek out', (tester) async {
+    await pumpWheel(tester);
+    double realButtonOpacity() => tester
+        .widget<Opacity>(find.ancestor(of: find.byType(PostButton).first, matching: find.byType(Opacity)).first)
+        .opacity;
+    expect(realButtonOpacity(), 1);
+
+    await tester.tap(find.byType(PostButton));
+    await tester.pump();
+    await settle(tester);
+    expect(find.byType(PostButton), findsNWidgets(2));
+    expect(realButtonOpacity(), 0);
+
+    await tester.tapAt(const Offset(10, 10));
+    await tester.pump();
+    await settle(tester);
+    expect(realButtonOpacity(), 1);
+  });
+
   testWidgets('a blocked user never sees the wheel', (tester) async {
     await pumpWheel(tester, canOpen: false);
     await tester.tap(find.byType(PostButton));

@@ -1,9 +1,11 @@
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../theme.dart';
+import 'goo.dart';
 
 /// Frosted-glass building blocks.
 ///
@@ -192,44 +194,42 @@ Future<T?> showGlassSheet<T>(BuildContext context, {required WidgetBuilder build
   );
 }
 
-/// The round green "new post" button.
+/// The round green "new post" button: a drop of liquid that wobbles under the finger and
+/// stretches after it (see [GooBlob]).
 class PostButton extends StatelessWidget {
   final VoidCallback onPressed;
   final String tooltip;
   final double size;
 
-  const PostButton({super.key, required this.onPressed, required this.tooltip, this.size = 60});
+  /// A finger's global position to stretch towards, for a touch that started somewhere else.
+  final ValueListenable<Offset?>? reachTowards;
+
+  const PostButton({super.key, required this.onPressed, required this.tooltip, this.size = 60, this.reachTowards});
+
+  static const _gradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [AppTheme.brandLight, AppTheme.brand],
+  );
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        boxShadow: [BoxShadow(color: AppTheme.brand.withValues(alpha: 0.3), blurRadius: 14, offset: const Offset(0, 3))],
-      ),
-      // ClipOval also limits touches to the circle; the tooltip alone would catch its square corners.
-      child: ClipOval(
-        child: Tooltip(
-          message: tooltip,
-          // Holding the button is a gesture of its own (see PostWheelButton).
-          triggerMode: TooltipTriggerMode.manual,
-          child: Material(
-            color: Colors.transparent,
-            child: Ink(
-              width: size,
-              height: size,
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [AppTheme.brandLight, AppTheme.brand],
-                ),
-              ),
-              child: InkWell(
-                onTap: onPressed,
-                child: Icon(Icons.add_rounded, color: Colors.white, size: size * 0.55),
-              ),
+    // Outermost, so the tooltip doesn't catch touches on the square corners either.
+    return RoundHitArea(
+      child: Tooltip(
+        message: tooltip,
+        // Holding the button is a gesture of its own (see PostWheelButton).
+        triggerMode: TooltipTriggerMode.manual,
+        child: Semantics(
+          button: true,
+          child: GestureDetector(
+            onTap: onPressed,
+            child: GooBlob(
+              size: size,
+              gradient: _gradient,
+              shadowColor: AppTheme.brand.withValues(alpha: 0.3),
+              reachTowards: reachTowards,
+              child: Icon(Icons.add_rounded, color: Colors.white, size: size * 0.55),
             ),
           ),
         ),
@@ -286,7 +286,8 @@ class GlassNavBar extends StatelessWidget {
 
     return SizedBox(
       height: overhang + _barHeight + inset,
-      child: Stack(children: [
+      // Unclipped, so the post button can stretch up past the bar's top.
+      child: Stack(clipBehavior: Clip.none, children: [
         Positioned.fill(child: CustomPaint(painter: _BarShadowPainter(clipper))),
         // The clip also limits touches to the bar's shape, so the corners and the area beside
         // the button still reach the page underneath.
