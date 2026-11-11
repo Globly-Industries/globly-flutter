@@ -136,7 +136,16 @@ class Post {
         needsReview: j['needsReview'] ?? false,
       );
 
-  Post copyWith({String? title, String? description, int? upvotes, int? downvotes, int? myVote, bool? isHidden}) => Post(
+  Post copyWith({
+    String? title,
+    String? description,
+    int? upvotes,
+    int? downvotes,
+    int? commentCount,
+    int? myVote,
+    bool? isHidden,
+  }) =>
+      Post(
         id: id,
         author: author,
         title: title ?? this.title,
@@ -149,7 +158,7 @@ class Post {
         views: views,
         upvotes: upvotes ?? this.upvotes,
         downvotes: downvotes ?? this.downvotes,
-        commentCount: commentCount,
+        commentCount: commentCount ?? this.commentCount,
         myVote: myVote ?? this.myVote,
         reportCount: reportCount,
         isHidden: isHidden ?? this.isHidden,

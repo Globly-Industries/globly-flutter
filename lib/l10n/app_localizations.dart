@@ -997,6 +997,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The update couldn\'t be downloaded.'**
   String get updateFailed;
+
+  /// No description provided for @feedViewImmersive.
+  ///
+  /// In en, this message translates to:
+  /// **'Full-screen feed'**
+  String get feedViewImmersive;
+
+  /// No description provided for @feedViewList.
+  ///
+  /// In en, this message translates to:
+  /// **'List feed'**
+  String get feedViewList;
+
+  /// No description provided for @showOnMap.
+  ///
+  /// In en, this message translates to:
+  /// **'Show on map'**
+  String get showOnMap;
+
+  /// No description provided for @soundOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn sound on'**
+  String get soundOn;
+
+  /// No description provided for @soundOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn sound off'**
+  String get soundOff;
+
+  /// No description provided for @readMore.
+  ///
+  /// In en, this message translates to:
+  /// **'Read more'**
+  String get readMore;
+
+  /// No description provided for @postDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Post details'**
+  String get postDetails;
 }
 
 class _AppLocalizationsDelegate

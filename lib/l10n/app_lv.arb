@@ -163,5 +163,13 @@
   "updateLater": "Vēlāk",
   "updateNow": "Atjaunināt",
   "updateDownloading": "Lejupielādē… {percent}%",
-  "updateFailed": "Atjauninājumu neizdevās lejupielādēt."
+  "updateFailed": "Atjauninājumu neizdevās lejupielādēt.",
+
+  "feedViewImmersive": "Pilnekrāna plūsma",
+  "feedViewList": "Saraksta plūsma",
+  "showOnMap": "Rādīt kartē",
+  "soundOn": "Ieslēgt skaņu",
+  "soundOff": "Izslēgt skaņu",
+  "readMore": "Lasīt vairāk",
+  "postDetails": "Ieraksta informācija"
 }

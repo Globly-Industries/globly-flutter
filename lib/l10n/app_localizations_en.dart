@@ -500,4 +500,25 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get updateFailed => 'The update couldn\'t be downloaded.';
+
+  @override
+  String get feedViewImmersive => 'Full-screen feed';
+
+  @override
+  String get feedViewList => 'List feed';
+
+  @override
+  String get showOnMap => 'Show on map';
+
+  @override
+  String get soundOn => 'Turn sound on';
+
+  @override
+  String get soundOff => 'Turn sound off';
+
+  @override
+  String get readMore => 'Read more';
+
+  @override
+  String get postDetails => 'Post details';
 }

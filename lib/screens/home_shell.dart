@@ -72,6 +72,12 @@ class _HomeShellState extends State<HomeShell> {
     }
   }
 
+  /// Switches to the map and flies to [post], opening its preview there.
+  void _showOnMap(Post post) {
+    setState(() => _index = 0);
+    _mapKey.currentState?.showPost(post);
+  }
+
   Widget _postButton(double direction, double size) => PostWheelButton(
         options: availablePostTypes,
         direction: direction,
@@ -86,7 +92,10 @@ class _HomeShellState extends State<HomeShell> {
     final l = context.l10n;
     final pages = IndexedStack(
       index: _index,
-      children: [MapScreen(key: _mapKey), FeedScreen(key: _feedKey)],
+      children: [
+        MapScreen(key: _mapKey),
+        FeedScreen(key: _feedKey, visible: _index == 1, onShowOnMap: _showOnMap),
+      ],
     );
 
     final items = [

@@ -505,4 +505,25 @@ class AppLocalizationsLv extends AppLocalizations {
 
   @override
   String get updateFailed => 'Atjauninājumu neizdevās lejupielādēt.';
+
+  @override
+  String get feedViewImmersive => 'Pilnekrāna plūsma';
+
+  @override
+  String get feedViewList => 'Saraksta plūsma';
+
+  @override
+  String get showOnMap => 'Rādīt kartē';
+
+  @override
+  String get soundOn => 'Ieslēgt skaņu';
+
+  @override
+  String get soundOff => 'Izslēgt skaņu';
+
+  @override
+  String get readMore => 'Lasīt vairāk';
+
+  @override
+  String get postDetails => 'Ieraksta informācija';
 }

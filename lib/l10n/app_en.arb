@@ -177,5 +177,13 @@
   "updateNow": "Update",
   "updateDownloading": "Downloading… {percent}%",
   "@updateDownloading": { "placeholders": { "percent": { "type": "int" } } },
-  "updateFailed": "The update couldn't be downloaded."
+  "updateFailed": "The update couldn't be downloaded.",
+
+  "feedViewImmersive": "Full-screen feed",
+  "feedViewList": "List feed",
+  "showOnMap": "Show on map",
+  "soundOn": "Turn sound on",
+  "soundOff": "Turn sound off",
+  "readMore": "Read more",
+  "postDetails": "Post details"
 }

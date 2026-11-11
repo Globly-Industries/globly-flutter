@@ -93,6 +93,12 @@ class MapScreenState extends State<MapScreen> {
     }
   }
 
+  /// Flies to [post] and opens its preview, e.g. when it is picked from the feed.
+  Future<void> showPost(Post post) async {
+    await _mapbox.currentState?.goToLocation(LatLng(post.latitude, post.longitude));
+    if (mounted) await _showPreview(post.id);
+  }
+
   Future<void> _goToMyLocation() async {
     try {
       final here = await currentLocation();

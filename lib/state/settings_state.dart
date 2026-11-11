@@ -1,16 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// App language: null = follow the device, otherwise 'en' or 'lv'. Persisted locally.
+/// Local preferences, persisted on the device:
+/// - app language: null = follow the device, otherwise 'en' or 'lv';
+/// - feed view: full-screen pages (the default) or the card list.
 class SettingsState extends ChangeNotifier {
   static const _localeKey = 'locale';
+  static const _immersiveFeedKey = 'immersiveFeed';
 
   Locale? _locale;
   Locale? get locale => _locale;
 
+  bool _immersiveFeed = true;
+  bool get immersiveFeed => _immersiveFeed;
+
   Future<void> load() async {
-    final code = (await SharedPreferences.getInstance()).getString(_localeKey);
+    final prefs = await SharedPreferences.getInstance();
+    final code = prefs.getString(_localeKey);
     _locale = code == null ? null : Locale(code);
+    _immersiveFeed = prefs.getBool(_immersiveFeedKey) ?? true;
     notifyListeners();
   }
 
@@ -23,5 +31,11 @@ class SettingsState extends ChangeNotifier {
     } else {
       await prefs.setString(_localeKey, locale.languageCode);
     }
+  }
+
+  Future<void> setImmersiveFeed(bool immersive) async {
+    _immersiveFeed = immersive;
+    notifyListeners();
+    await (await SharedPreferences.getInstance()).setBool(_immersiveFeedKey, immersive);
   }
 }
