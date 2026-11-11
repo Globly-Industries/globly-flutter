@@ -180,6 +180,7 @@ class HiddenBanner extends StatelessWidget {
     final text = switch (post.hiddenReason) {
       HiddenReason.downvotes => l.hiddenDownvotes,
       HiddenReason.admin => l.hiddenAdmin,
+      HiddenReason.automatic => l.hiddenAutomatic,
       _ => l.hiddenReports,
     };
     return Container(

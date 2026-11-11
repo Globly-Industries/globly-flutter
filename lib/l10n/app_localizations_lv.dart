@@ -219,6 +219,10 @@ class AppLocalizationsLv extends AppLocalizations {
   String get hiddenAdmin => 'Paslēpis moderators.';
 
   @override
+  String get hiddenAutomatic =>
+      'Paslēpts: mūsu filtrs atzīmēja šo ierakstu kā, iespējams, nepiedienīgu. Moderators to pārskatīs.';
+
+  @override
   String get publish => 'Publicēt';
 
   @override
@@ -329,7 +333,7 @@ class AppLocalizationsLv extends AppLocalizations {
   String get admin => 'Administrators';
 
   @override
-  String get hiddenPosts => 'Paslēptie ieraksti';
+  String get hiddenPosts => 'Pārskatīšanai';
 
   @override
   String get users => 'Lietotāji';
@@ -339,6 +343,9 @@ class AppLocalizationsLv extends AppLocalizations {
 
   @override
   String get restore => 'Atjaunot';
+
+  @override
+  String get approve => 'Apstiprināt';
 
   @override
   String get hide => 'Paslēpt';
@@ -353,6 +360,16 @@ class AppLocalizationsLv extends AppLocalizations {
 
   @override
   String get reasonAdmin => 'Paslēpis moderators';
+
+  @override
+  String reasonAutomatic(int percent) {
+    return 'Automātiski paslēpts: NSFW $percent%';
+  }
+
+  @override
+  String reasonFlagged(int percent) {
+    return 'Atzīmēts: NSFW $percent%';
+  }
 
   @override
   String get searchUsers => 'Meklēt lietotājus';

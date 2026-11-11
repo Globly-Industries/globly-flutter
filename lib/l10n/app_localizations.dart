@@ -494,6 +494,12 @@ abstract class AppLocalizations {
   /// **'Hidden by a moderator.'**
   String get hiddenAdmin;
 
+  /// No description provided for @hiddenAutomatic.
+  ///
+  /// In en, this message translates to:
+  /// **'Hidden: our filter flagged this post as possibly explicit. A moderator will review it.'**
+  String get hiddenAutomatic;
+
   /// No description provided for @publish.
   ///
   /// In en, this message translates to:
@@ -701,7 +707,7 @@ abstract class AppLocalizations {
   /// No description provided for @hiddenPosts.
   ///
   /// In en, this message translates to:
-  /// **'Hidden posts'**
+  /// **'To review'**
   String get hiddenPosts;
 
   /// No description provided for @users.
@@ -721,6 +727,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Restore'**
   String get restore;
+
+  /// No description provided for @approve.
+  ///
+  /// In en, this message translates to:
+  /// **'Approve'**
+  String get approve;
 
   /// No description provided for @hide.
   ///
@@ -745,6 +757,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Hidden by moderator'**
   String get reasonAdmin;
+
+  /// No description provided for @reasonAutomatic.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-hidden: NSFW {percent}%'**
+  String reasonAutomatic(int percent);
+
+  /// No description provided for @reasonFlagged.
+  ///
+  /// In en, this message translates to:
+  /// **'Flagged: NSFW {percent}%'**
+  String reasonFlagged(int percent);
 
   /// No description provided for @searchUsers.
   ///

@@ -219,6 +219,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get hiddenAdmin => 'Hidden by a moderator.';
 
   @override
+  String get hiddenAutomatic =>
+      'Hidden: our filter flagged this post as possibly explicit. A moderator will review it.';
+
+  @override
   String get publish => 'Publish';
 
   @override
@@ -325,7 +329,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get admin => 'Admin';
 
   @override
-  String get hiddenPosts => 'Hidden posts';
+  String get hiddenPosts => 'To review';
 
   @override
   String get users => 'Users';
@@ -335,6 +339,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get restore => 'Restore';
+
+  @override
+  String get approve => 'Approve';
 
   @override
   String get hide => 'Hide';
@@ -349,6 +356,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get reasonAdmin => 'Hidden by moderator';
+
+  @override
+  String reasonAutomatic(int percent) {
+    return 'Auto-hidden: NSFW $percent%';
+  }
+
+  @override
+  String reasonFlagged(int percent) {
+    return 'Flagged: NSFW $percent%';
+  }
 
   @override
   String get searchUsers => 'Search users';

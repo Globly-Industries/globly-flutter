@@ -15,7 +15,10 @@ enum HiddenReason {
   none,
   reports,
   downvotes,
-  admin;
+  admin,
+
+  /// The NSFW filter is nearly sure the media is explicit.
+  automatic;
 
   static HiddenReason fromApi(String? value) =>
       HiddenReason.values.firstWhere((r) => r.name.toLowerCase() == value?.toLowerCase(), orElse: () => HiddenReason.none);
@@ -77,6 +80,12 @@ class Post {
   final DateTime createdAt;
   final DateTime? updatedAt;
 
+  /// Admins only: the NSFW filter's score (0-1); null until scanned, and for everyone else.
+  final double? nsfwScore;
+
+  /// Admins only: visible, but the NSFW filter queued it for review.
+  final bool needsReview;
+
   const Post({
     required this.id,
     required this.author,
@@ -97,6 +106,8 @@ class Post {
     required this.hiddenReason,
     required this.createdAt,
     required this.updatedAt,
+    this.nsfwScore,
+    this.needsReview = false,
   });
 
   int get score => upvotes - downvotes;
@@ -121,6 +132,8 @@ class Post {
         hiddenReason: HiddenReason.fromApi(j['hiddenReason']),
         createdAt: DateTime.parse(j['createdAt']),
         updatedAt: j['updatedAt'] == null ? null : DateTime.parse(j['updatedAt']),
+        nsfwScore: (j['nsfwScore'] as num?)?.toDouble(),
+        needsReview: j['needsReview'] ?? false,
       );
 
   Post copyWith({String? title, String? description, int? upvotes, int? downvotes, int? myVote, bool? isHidden}) => Post(
@@ -143,6 +156,8 @@ class Post {
         hiddenReason: hiddenReason,
         createdAt: createdAt,
         updatedAt: updatedAt,
+        nsfwScore: nsfwScore,
+        needsReview: needsReview,
       );
 }
 

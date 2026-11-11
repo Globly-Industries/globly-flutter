@@ -9,7 +9,8 @@ import '../widgets/glass.dart';
 import '../widgets/post_card.dart';
 import 'post_detail_screen.dart';
 
-/// Administration: queue of posts hidden by community moderation, and user removal.
+/// Administration: review queue (posts hidden by moderation or flagged by the NSFW filter), and
+/// user removal.
 class AdminScreen extends StatelessWidget {
   const AdminScreen({super.key});
 
@@ -75,9 +76,12 @@ class _HiddenPostsState extends State<_HiddenPosts> {
 
   String _reason(Post p) {
     final l = context.l10n;
+    final percent = ((p.nsfwScore ?? 0) * 100).round();
+    if (!p.isHidden && p.needsReview) return l.reasonFlagged(percent);
     return switch (p.hiddenReason) {
       HiddenReason.downvotes => l.reasonDownvotes,
       HiddenReason.admin => l.reasonAdmin,
+      HiddenReason.automatic => l.reasonAutomatic(percent),
       _ => l.reasonReports(p.reportCount),
     };
   }
@@ -115,8 +119,9 @@ class _HiddenPostsState extends State<_HiddenPosts> {
                   Row(children: [
                     Expanded(
                       child: OutlinedButton.icon(
-                        icon: const Icon(Icons.restore_rounded),
-                        label: Text(l.restore),
+                        // Flagged posts are still visible: restoring them just approves them.
+                        icon: Icon(p.isHidden ? Icons.restore_rounded : Icons.check_rounded),
+                        label: Text(p.isHidden ? l.restore : l.approve),
                         onPressed: () => _act(() => _api.adminRestore(p.id)),
                       ),
                     ),
