@@ -34,6 +34,8 @@ dependencies:
   record: ^7.1.2
   path_provider: ^2.1.6
   vibration: ^3.2.1
+  # Hash of each capture, for its capture ticket (widgets/media_capture.dart)
+  crypto: ^3.0.8
 
   # Self-update from GitHub releases (lib/update/)
   package_info_plus: ^9.0.1

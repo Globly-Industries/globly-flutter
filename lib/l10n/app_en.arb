@@ -147,6 +147,8 @@
   "errContentRejected": "This content isn't allowed.",
   "errInvalidFile": "This file type isn't supported.",
   "errFileTooLarge": "The file is too large.",
+  "errCaptureInvalid": "This media could not be verified as captured in Globly. Please capture it again.",
+  "errCaptureExpired": "This capture is too old to post. Please capture it again.",
   "errTextRequired": "Write something first.",
   "errCommentEmpty": "Write a comment first.",
   "errCannotDeleteSelf": "You can't delete your own account here.",

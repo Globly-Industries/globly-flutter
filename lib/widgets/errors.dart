@@ -35,6 +35,8 @@ String errorMessage(BuildContext context, Object error) {
     'content_rejected' => l.errContentRejected,
     'invalid_file' => l.errInvalidFile,
     'file_too_large' => l.errFileTooLarge,
+    'capture_invalid' => l.errCaptureInvalid,
+    'capture_expired' => l.errCaptureExpired,
     'file_required' => l.chooseFileFirst,
     'text_required' => l.errTextRequired,
     'comment_empty' => l.errCommentEmpty,

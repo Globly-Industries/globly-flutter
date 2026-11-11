@@ -109,6 +109,16 @@ class ApiClient {
 
   Future<Post> post(String id) async => Post.fromJson(await _call(() => _dio.get('/api/posts/$id')));
 
+  // ---------- Capture tickets ----------
+
+  /// Asked for right before the camera or recorder opens; returns the ticket id.
+  Future<String> startCapture(MediaType type) async =>
+      (await _call(() => _dio.post('/api/captures', data: {'mediaType': type.apiName})))['id'] as String;
+
+  /// Binds the finished capture to its ticket. Safe to repeat with the same hash.
+  Future<void> sealCapture(String captureId, String sha256) =>
+      _call(() => _dio.post('/api/captures/$captureId/seal', data: {'sha256': sha256}));
+
   Future<Post> createPost({
     required String title,
     String? description,
@@ -117,6 +127,7 @@ class ApiClient {
     required double longitude,
     int? locationRadiusMeters,
     XFile? file,
+    String? captureId,
     void Function(int sent, int total)? onProgress,
   }) async {
     final form = FormData.fromMap({
@@ -126,6 +137,7 @@ class ApiClient {
       'latitude': latitude.toString(),
       'longitude': longitude.toString(),
       if (locationRadiusMeters != null) 'locationRadiusMeters': locationRadiusMeters.toString(),
+      'captureId': ?captureId,
       if (file != null)
         // Web has no file system: upload from memory there, stream from disk on Android.
         'file': kIsWeb

@@ -419,6 +419,14 @@ class AppLocalizationsLv extends AppLocalizations {
   String get errFileTooLarge => 'Fails ir pārāk liels.';
 
   @override
+  String get errCaptureInvalid =>
+      'Neizdevās apstiprināt, ka šis ieraksts uzņemts Globly. Lūdzu, uzņemiet to vēlreiz.';
+
+  @override
+  String get errCaptureExpired =>
+      'Šis ieraksts ir pārāk vecs, lai to publicētu. Lūdzu, uzņemiet to vēlreiz.';
+
+  @override
   String get errTextRequired => 'Vispirms uzrakstiet tekstu.';
 
   @override

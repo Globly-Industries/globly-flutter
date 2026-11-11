@@ -19,9 +19,9 @@ class CreatePostScreen extends StatefulWidget {
   final MediaType type;
 
   /// The captured media; null only for text posts.
-  final XFile? file;
+  final CapturedMedia? media;
 
-  const CreatePostScreen({super.key, required this.type, this.file});
+  const CreatePostScreen({super.key, required this.type, this.media});
 
   @override
   State<CreatePostScreen> createState() => _CreatePostScreenState();
@@ -32,7 +32,9 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   final _title = TextEditingController();
   final _description = TextEditingController();
 
-  late XFile? _file = widget.file;
+  late CapturedMedia? _media = widget.media;
+
+  XFile? get _file => _media?.file;
 
   /// Photo bytes for the preview (Image.file is not available on web).
   Uint8List? _previewBytes;
@@ -84,10 +86,10 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
 
   /// Keeps the current media if the user backs out of the new capture.
   Future<void> _retake() async {
-    final file = await captureMedia(context, _type);
-    if (file == null || !mounted) return;
+    final media = await captureMedia(context, _type);
+    if (media == null || !mounted) return;
     setState(() {
-      _file = file;
+      _media = media;
       _previewBytes = null;
     });
     await _loadPreview();
@@ -102,7 +104,9 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     }
     setState(() => _progress = 0);
     try {
-      await context.read<ApiClient>().createPost(
+      final api = context.read<ApiClient>();
+      await _media?.ensureSealed(api);
+      await api.createPost(
             title: _title.text.trim(),
             description: _description.text.trim(),
             mediaType: _type,
@@ -110,6 +114,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
             longitude: _location!.longitude,
             locationRadiusMeters: _locationRadius,
             file: _file,
+            captureId: _media?.captureId,
             onProgress: (sent, total) {
               if (total > 0 && mounted) setState(() => _progress = sent / total);
             },

@@ -138,6 +138,8 @@
   "errContentRejected": "Šāds saturs nav atļauts.",
   "errInvalidFile": "Šis faila veids netiek atbalstīts.",
   "errFileTooLarge": "Fails ir pārāk liels.",
+  "errCaptureInvalid": "Neizdevās apstiprināt, ka šis ieraksts uzņemts Globly. Lūdzu, uzņemiet to vēlreiz.",
+  "errCaptureExpired": "Šis ieraksts ir pārāk vecs, lai to publicētu. Lūdzu, uzņemiet to vēlreiz.",
   "errTextRequired": "Vispirms uzrakstiet tekstu.",
   "errCommentEmpty": "Vispirms uzrakstiet komentāru.",
   "errCannotDeleteSelf": "Šeit nevar dzēst savu kontu.",

@@ -414,6 +414,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get errFileTooLarge => 'The file is too large.';
 
   @override
+  String get errCaptureInvalid =>
+      'This media could not be verified as captured in Globly. Please capture it again.';
+
+  @override
+  String get errCaptureExpired =>
+      'This capture is too old to post. Please capture it again.';
+
+  @override
   String get errTextRequired => 'Write something first.';
 
   @override

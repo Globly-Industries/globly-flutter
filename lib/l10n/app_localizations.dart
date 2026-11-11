@@ -848,6 +848,18 @@ abstract class AppLocalizations {
   /// **'The file is too large.'**
   String get errFileTooLarge;
 
+  /// No description provided for @errCaptureInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'This media could not be verified as captured in Globly. Please capture it again.'**
+  String get errCaptureInvalid;
+
+  /// No description provided for @errCaptureExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'This capture is too old to post. Please capture it again.'**
+  String get errCaptureExpired;
+
   /// No description provided for @errTextRequired.
   ///
   /// In en, this message translates to:

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
+import '../api/api_client.dart';
 import '../models/models.dart';
 import '../state/auth_state.dart';
 import '../update/update_dialog.dart';
@@ -44,8 +44,8 @@ class _HomeShellState extends State<HomeShell> {
 
   /// Picks up a photo or video whose capture was cut short by Android closing the app.
   Future<void> _recoverCapture() async {
-    final recovered = await recoverCapture();
-    if (recovered != null && mounted) await _openComposer(recovered.$1, recovered.$2);
+    final recovered = await recoverCapture(context.read<ApiClient>());
+    if (recovered != null && mounted) await _openComposer(recovered.type, recovered);
   }
 
   bool _canPost() {
@@ -56,15 +56,15 @@ class _HomeShellState extends State<HomeShell> {
 
   /// Captures first (except for text); the post form only opens once there is something to post.
   Future<void> _startPost(MediaType type) async {
-    final file = type == MediaType.text ? null : await captureMedia(context, type);
-    if (!mounted || (type != MediaType.text && file == null)) return;
-    await _openComposer(type, file);
+    final media = type == MediaType.text ? null : await captureMedia(context, type);
+    if (!mounted || (type != MediaType.text && media == null)) return;
+    await _openComposer(type, media);
   }
 
-  Future<void> _openComposer(MediaType type, XFile? file) async {
+  Future<void> _openComposer(MediaType type, CapturedMedia? media) async {
     final created = await Navigator.push<bool>(
       context,
-      MaterialPageRoute(builder: (_) => CreatePostScreen(type: type, file: file), fullscreenDialog: true),
+      MaterialPageRoute(builder: (_) => CreatePostScreen(type: type, media: media), fullscreenDialog: true),
     );
     if (created == true) {
       _mapKey.currentState?.refresh();
