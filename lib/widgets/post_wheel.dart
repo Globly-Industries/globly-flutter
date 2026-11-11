@@ -1,6 +1,8 @@
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
+import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 
@@ -24,7 +26,8 @@ const double _step = 50 * math.pi / 180;
 /// Touches closer to the centre than this select nothing, so a hold can stay "undecided".
 const double _deadZone = 44;
 
-double _optionAngle(int index, int count, double direction) => direction + (index - (count - 1) / 2) * _step;
+double _optionAngle(int index, int count, double direction) =>
+    direction + (index - (count - 1) / 2) * _step;
 
 /// Which option a finger at [position] points at, or null if it is in the centre or between options.
 int? wheelSelectionAt(Offset position, Offset center, int count, double direction) {
@@ -80,6 +83,10 @@ class _PostWheelButtonState extends State<PostWheelButton> with SingleTickerProv
   /// The option under the finger, to give a little vibration each time it changes.
   int? _hovered;
 
+  /// A touch anywhere on the open wheel, after the one that opened it (if any) has lifted.
+  int? _pointer;
+  Offset _pointerStart = Offset.zero;
+
   // An overlay rather than a dialog: pushing a route makes the Navigator cancel active touches,
   // which would end the hold-and-drag gesture the moment the wheel appears.
   OverlayEntry? _overlay;
@@ -123,6 +130,9 @@ class _PostWheelButtonState extends State<PostWheelButton> with SingleTickerProv
         animation: _animation,
         finger: _finger,
         onClose: _close,
+        onPointerDown: _pointerDown,
+        onPointerMove: _pointerMove,
+        onPointerUp: _pointerUp,
       ),
     );
     Overlay.of(context, rootOverlay: true).insert(overlay);
@@ -141,6 +151,7 @@ class _PostWheelButtonState extends State<PostWheelButton> with SingleTickerProv
     _backHandler = null;
     backHandler?.remove();
     _finger.value = null;
+    _pointer = null;
 
     try {
       await _animation.reverse().orCancel;
@@ -163,7 +174,7 @@ class _PostWheelButtonState extends State<PostWheelButton> with SingleTickerProv
   }
 
   void _move(Offset position) {
-    if (_overlay == null) return;
+    if (_overlay == null || _closing) return;
     _finger.value = position;
     final index = wheelSelectionAt(position, _center, widget.options.length, widget.direction);
     if (index != _hovered && index != null) Haptics.tick();
@@ -177,6 +188,31 @@ class _PostWheelButtonState extends State<PostWheelButton> with SingleTickerProv
     _finger.value = null;
     // Let go without choosing: the wheel stays open for tapping.
     if (index != null) _close(widget.options[index]);
+  }
+
+  // Touches on the open wheel. The button reaches after them and the option under them swells,
+  // just as for the finger that opened it; dragging onto an option and letting go chooses it. A
+  // plain tap is left to the options and the shade, so tapping far off doesn't pick anything.
+  void _pointerDown(PointerDownEvent event) {
+    if (_pointer != null || _closing) return;
+    _pointer = event.pointer;
+    _pointerStart = event.position;
+    _hovered = null;
+    _move(event.position);
+  }
+
+  void _pointerMove(PointerMoveEvent event) {
+    if (event.pointer == _pointer) _move(event.position);
+  }
+
+  void _pointerUp(PointerEvent event) {
+    if (event.pointer != _pointer) return;
+    _pointer = null;
+    if (event is PointerUpEvent && (event.position - _pointerStart).distance > kTouchSlop) {
+      _release();
+    } else {
+      _finger.value = null;
+    }
   }
 
   @override
@@ -209,6 +245,9 @@ class _PostWheel extends StatelessWidget {
   final Animation<double> animation;
   final ValueNotifier<Offset?> finger;
   final void Function([MediaType? selected]) onClose;
+  final PointerDownEventListener onPointerDown;
+  final PointerMoveEventListener onPointerMove;
+  final ValueChanged<PointerEvent> onPointerUp;
 
   const _PostWheel({
     required this.options,
@@ -218,63 +257,87 @@ class _PostWheel extends StatelessWidget {
     required this.animation,
     required this.finger,
     required this.onClose,
+    required this.onPointerDown,
+    required this.onPointerMove,
+    required this.onPointerUp,
   });
 
   @override
   Widget build(BuildContext context) {
-    final curve = CurvedAnimation(parent: animation, curve: Curves.easeOutBack, reverseCurve: Curves.easeIn);
+    final curve = CurvedAnimation(
+      parent: animation,
+      curve: Curves.easeOutBack,
+      reverseCurve: Curves.easeIn,
+    );
     final fade = CurvedAnimation(parent: animation, curve: Curves.easeOut);
 
     return Material(
       type: MaterialType.transparency,
-      child: Stack(children: [
-        // Tapping anywhere else closes the wheel. The shade pools round the wheel and fades out
-        // towards the edges, so the screen stays in view without competing with the options.
-        Positioned.fill(
-          child: GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: onClose,
-            child: FadeTransition(
-              opacity: fade,
-              child: CustomPaint(painter: _ShadePainter(center)),
+      // Sees every touch on the wheel without getting in the way of the taps below it.
+      child: Listener(
+        behavior: HitTestBehavior.translucent,
+        onPointerDown: onPointerDown,
+        onPointerMove: onPointerMove,
+        onPointerUp: onPointerUp,
+        onPointerCancel: onPointerUp,
+        child: Stack(
+          children: [
+            // Tapping anywhere else closes the wheel. The shade pools round the wheel and fades out
+            // towards the edges, so the screen stays in view without competing with the options.
+            Positioned.fill(
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: onClose,
+                child: FadeTransition(
+                  opacity: fade,
+                  child: CustomPaint(painter: _ShadePainter(center)),
+                ),
+              ),
             ),
-          ),
-        ),
-        ValueListenableBuilder<Offset?>(
-          valueListenable: finger,
-          builder: (context, position, _) => _GooOptions(
-            options: options,
-            center: center,
-            direction: direction,
-            buttonSize: size,
-            open: curve,
-            selected: position == null ? null : wheelSelectionAt(position, center, options.length, direction),
-            onTap: (type) => onClose(type),
-          ),
-        ),
-        // The "+" turned into a close button, in the exact place of the real one. It reaches after
-        // the finger that is choosing, as if the option were being pulled out of it.
-        Positioned(
-          left: center.dx - size / 2,
-          top: center.dy - size / 2,
-          child: RotationTransition(
-            turns: Tween<double>(begin: 0, end: 0.125).animate(fade),
-            child: PostButton(
-              onPressed: onClose,
-              tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
-              size: size,
-              reachTowards: finger,
+            ValueListenableBuilder<Offset?>(
+              valueListenable: finger,
+              builder: (context, position, _) => _GooOptions(
+                options: options,
+                center: center,
+                direction: direction,
+                buttonSize: size,
+                open: curve,
+                selected: position == null
+                    ? null
+                    : wheelSelectionAt(position, center, options.length, direction),
+                onTap: (type) => onClose(type),
+              ),
             ),
-          ),
+            // The "+" turned into a close button, in the exact place of the real one. It reaches after
+            // the finger that is choosing, as if the option were being pulled out of it, and stirs
+            // restlessly for as long as a finger is down.
+            Positioned(
+              left: center.dx - size / 2,
+              top: center.dy - size / 2,
+              child: RotationTransition(
+                turns: Tween<double>(begin: 0, end: 0.125).animate(fade),
+                child: ValueListenableBuilder<Offset?>(
+                  valueListenable: finger,
+                  builder: (context, position, _) => PostButton(
+                    onPressed: onClose,
+                    tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
+                    size: size,
+                    reachTowards: finger,
+                    lively: position != null,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
-      ]),
+      ),
     );
   }
 }
 
 /// The options as droplets of the same goo as the button. Opening, each is drawn out of the button
 /// on a beaded neck that thins and snaps; closing, they are sucked back in. The option under the
-/// finger swells, fills with its colour and bulges back towards the button.
+/// finger swells and fills with its colour.
 class _GooOptions extends StatefulWidget {
   final List<MediaType> options;
   final Offset center;
@@ -302,7 +365,11 @@ class _GooOptionsState extends State<_GooOptions> with TickerProviderStateMixin 
   /// How swollen each option is: 1 while the finger is on it.
   late final List<AnimationController> _swell = [
     for (final _ in widget.options)
-      AnimationController(vsync: this, duration: const Duration(milliseconds: 260), reverseDuration: const Duration(milliseconds: 160)),
+      AnimationController(
+        vsync: this,
+        duration: const Duration(milliseconds: 260),
+        reverseDuration: const Duration(milliseconds: 160),
+      ),
   ];
   late final List<Animation<double>> _swellCurve = [
     for (final controller in _swell)
@@ -330,7 +397,8 @@ class _GooOptionsState extends State<_GooOptions> with TickerProviderStateMixin 
     super.dispose();
   }
 
-  Offset _direction(int i) => Offset.fromDirection(_optionAngle(i, widget.options.length, widget.direction));
+  Offset _direction(int i) =>
+      Offset.fromDirection(_optionAngle(i, widget.options.length, widget.direction));
 
   @override
   Widget build(BuildContext context) {
@@ -343,43 +411,49 @@ class _GooOptionsState extends State<_GooOptions> with TickerProviderStateMixin 
         final t = widget.open.value;
         // The labels come in once the droplets are mostly out, so they never sit on a neck.
         final contentOpacity = ((t - 0.5) / 0.5).clamp(0.0, 1.0);
-        return Stack(children: [
-          Positioned.fill(
-            child: IgnorePointer(
-              child: CustomPaint(
-                painter: _OptionGooPainter(
-                  center: widget.center,
-                  directions: [for (var i = 0; i < widget.options.length; i++) _direction(i)],
-                  buttonSize: widget.buttonSize,
-                  open: t,
-                  swell: [for (final s in _swellCurve) s.value],
-                  colors: [
-                    for (var i = 0; i < widget.options.length; i++)
-                      Color.lerp(plain, AppTheme.mediaColor(widget.options[i]), _swellCurve[i].value.clamp(0.0, 1.0))!,
-                  ],
-                  edge: glassEdge(context),
-                ),
-              ),
-            ),
-          ),
-          for (var i = 0; i < widget.options.length; i++)
-            Positioned(
-              left: widget.center.dx + _direction(i).dx * _radius * t - _optionSize,
-              top: widget.center.dy + _direction(i).dy * _radius * t - _optionSize / 2,
-              width: _optionSize * 2,
-              child: Opacity(
-                opacity: contentOpacity,
-                child: Transform.scale(
-                  scale: 1 + 0.15 * _swellCurve[i].value,
-                  child: _WheelOption(
-                    type: widget.options[i],
-                    selected: i == widget.selected,
-                    onTap: () => widget.onTap(widget.options[i]),
+        return Stack(
+          children: [
+            Positioned.fill(
+              child: IgnorePointer(
+                child: CustomPaint(
+                  painter: _OptionGooPainter(
+                    center: widget.center,
+                    directions: [for (var i = 0; i < widget.options.length; i++) _direction(i)],
+                    buttonSize: widget.buttonSize,
+                    open: t,
+                    swell: [for (final s in _swellCurve) s.value],
+                    colors: [
+                      for (var i = 0; i < widget.options.length; i++)
+                        Color.lerp(
+                          plain,
+                          AppTheme.mediaColor(widget.options[i]),
+                          _swellCurve[i].value.clamp(0.0, 1.0),
+                        )!,
+                    ],
+                    edge: glassEdge(context),
                   ),
                 ),
               ),
             ),
-        ]);
+            for (var i = 0; i < widget.options.length; i++)
+              Positioned(
+                left: widget.center.dx + _direction(i).dx * _radius * t - _optionSize,
+                top: widget.center.dy + _direction(i).dy * _radius * t - _optionSize / 2,
+                width: _optionSize * 2,
+                child: Opacity(
+                  opacity: contentOpacity,
+                  child: Transform.scale(
+                    scale: 1 + 0.15 * _swellCurve[i].value,
+                    child: _WheelOption(
+                      type: widget.options[i],
+                      selected: i == widget.selected,
+                      onTap: () => widget.onTap(widget.options[i]),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        );
       },
     );
   }
@@ -402,19 +476,22 @@ class _WheelOption extends StatelessWidget {
         onTap: onTap,
         child: SizedBox.square(
           dimension: _optionSize,
-          child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-            Icon(mediaIcon(type), size: 26, color: selected ? Colors.white : color),
-            const SizedBox(height: 2),
-            Text(
-              mediaLabel(context, type),
-              maxLines: 1,
-              style: TextStyle(
-                color: selected ? Colors.white : scheme.onSurface,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(mediaIcon(type), size: 26, color: selected ? Colors.white : color),
+              const SizedBox(height: 2),
+              Text(
+                mediaLabel(context, type),
+                maxLines: 1,
+                style: TextStyle(
+                  color: selected ? Colors.white : scheme.onSurface,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
-            ),
-          ]),
+            ],
+          ),
         ),
       ),
     );
@@ -443,7 +520,11 @@ class _OptionGooPainter extends CustomPainter {
   });
 
   /// Where along the way out the neck's beads sit, and how big each starts, as shares.
-  static const _beads = [(along: 0.3, size: 0.42), (along: 0.55, size: 0.34), (along: 0.8, size: 0.28)];
+  static const _beads = [
+    (along: 0.3, size: 0.42),
+    (along: 0.55, size: 0.34),
+    (along: 0.8, size: 0.28),
+  ];
 
   /// Smallest bead drawn, in logical pixels.
   static const double _minBead = 6;
@@ -477,11 +558,16 @@ class _OptionGooPainter extends CustomPainter {
         // Beads too small to read as part of a neck would just look like specks.
         for (final bead in _beads)
           if (_optionSize / 2 * bead.size * neck >= _minBead)
-            (centre: center + direction * out * bead.along, radius: _optionSize / 2 * bead.size * neck),
-        // A swollen droplet bulges back towards the button.
-        if (s > 0.05) (centre: spot - direction * radius * 0.75, radius: radius * 0.5 * s.clamp(0.0, 1.2)),
+            (
+              centre: center + direction * out * bead.along,
+              radius: _optionSize / 2 * bead.size * neck,
+            ),
       ];
-      final path = traceGoo(circles, gooLoneLevel, 2);
+      // Once the neck has snapped the droplet is a lone circle, which traces as exactly itself, so
+      // it can skip the tracing. That is how it spends nearly all its time on screen.
+      final path = circles.length == 1
+          ? (Path()..addOval(Rect.fromCircle(center: spot, radius: radius)))
+          : traceGoo(circles, gooLoneLevel, 3);
 
       canvas.drawPath(path.shift(const Offset(0, 3)), shadow);
       canvas.drawPath(path, Paint()..color = colors[i]);
@@ -490,7 +576,15 @@ class _OptionGooPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_OptionGooPainter old) => true; // Only built while something is changing.
+  // Rebuilt on every finger movement, to find the option under it; only what is drawn counts.
+  bool shouldRepaint(_OptionGooPainter old) =>
+      old.center != center ||
+      old.buttonSize != buttonSize ||
+      old.open != open ||
+      old.edge != edge ||
+      !listEquals(old.directions, directions) ||
+      !listEquals(old.swell, swell) ||
+      !listEquals(old.colors, colors);
 }
 
 /// A soft shade pooled round the wheel, fading towards the edges of the screen.
@@ -504,11 +598,10 @@ class _ShadePainter extends CustomPainter {
     canvas.drawRect(
       Offset.zero & size,
       Paint()
-        ..shader = ui.Gradient.radial(
-          center,
-          reach,
-          [Colors.black.withValues(alpha: 0.42), Colors.black.withValues(alpha: 0.10)],
-        ),
+        ..shader = ui.Gradient.radial(center, reach, [
+          Colors.black.withValues(alpha: 0.42),
+          Colors.black.withValues(alpha: 0.10),
+        ]),
     );
   }
 

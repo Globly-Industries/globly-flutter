@@ -24,10 +24,10 @@ class GooSimulation extends ChangeNotifier {
     // A core, an inner ring and an outer ring, whose outer edges together make the resting circle.
     // The outer circles overlap a lot, so the resting edge is round, not faceted.
     add(Offset.zero, radius * 0.55);
-    for (var i = 0; i < 6; i++) {
+    for (var i = 0; i < 5; i++) {
       add(
-        Offset.fromDirection(2 * math.pi * (i + 0.5) / 6, radius * 0.32),
-        radius * 0.36,
+        Offset.fromDirection(2 * math.pi * (i + 0.5) / 5, radius * 0.32),
+        radius * 0.4,
       );
     }
     for (var i = 0; i < _outerCount; i++) {
@@ -51,8 +51,9 @@ class GooSimulation extends ChangeNotifier {
     _target = List.filled(n, Offset.zero);
     // Each circle a little more or less eager than the next, so the clump moves unevenly, like
     // something fluid rather than one rubber ball.
+    _wander = List.filled(n, Offset.zero);
     _eagerness = [
-      for (var i = 0; i < _strandStart; i++) 1 + 0.4 * math.sin(i * 2.4),
+      for (var i = 0; i < _strandStart; i++) 1 + 0.5 * math.sin(i * 2.4),
       // Each droplet further along the strand trails a little more, so it whips about.
       ..._strandEagerness,
     ];
@@ -68,7 +69,9 @@ class GooSimulation extends ChangeNotifier {
 
   final double radius;
 
-  static const int _outerCount = 14;
+  /// Few and big enough to stay cheap to simulate and trace, while still round at rest and able to
+  /// show the small bumps of [_waves].
+  static const int _outerCount = 11;
 
   /// Distance of the outer circles' centres from the middle, as a share of [radius].
   static const double _outerRing = 0.62;
@@ -76,7 +79,7 @@ class GooSimulation extends ChangeNotifier {
   /// The strand's droplets, from the body outwards: their sizes, how far out each is drawn at full
   /// stretch (both as a share of [radius]), and how eagerly each follows.
   static const _strandSizes = [0.4, 0.33, 0.27];
-  static const _strandReach = [0.85, 1.35, 1.8];
+  static const _strandReach = [0.95, 1.55, 2.15];
   static const _strandEagerness = [0.6, 0.42, 0.3];
   late final int _strandStart;
 
@@ -91,26 +94,55 @@ class GooSimulation extends ChangeNotifier {
   late final List<Offset> _velocity;
   late final List<Offset> _target;
 
+  /// Where each circle is idly drifting to while [lively], added on to its target.
+  late final List<Offset> _wander;
+
+  /// Scratch space for each step's forces, kept rather than made afresh hundreds of times a second.
+  late final List<Offset> _force = List.filled(_rest.length, Offset.zero);
+
   Offset? _finger;
   bool _pressed = false;
   bool _atRest = true;
 
+  bool _lively = false;
+  final _random = math.Random();
+  double _time = 0;
+
+  /// Until the next random poke while [lively].
+  double _nextPoke = 0;
+
+  /// The wobbles that ripple round the edge while [lively]: how many lumps, their phase, how fast
+  /// they travel round and how big they are (as a share of [radius]). The broad ones change the
+  /// overall shape; the many-lumped ones put small bumps in the edge so it never looks quite round.
+  late final List<({int lobes, double phase, double speed, double size})> _waves = [
+    for (final lobes in const [2, 3, 4, 5])
+      (
+        lobes: lobes,
+        phase: _random.nextDouble() * 2 * math.pi,
+        speed: (2.4 + 2.4 * _random.nextDouble()) * (_random.nextBool() ? 1 : -1),
+        size: lobes <= 4 ? 0.03 / lobes * 2 : 0.028,
+      ),
+  ];
+  late final List<double> _drift = [
+    for (var k = 0; k < 4; k++) _random.nextDouble() * 2 * math.pi,
+  ];
+
   /// Pull of each circle towards its target.
-  static const double _stiffness = 260;
+  static const double _stiffness = 170;
 
   /// Pull between tied circles back to their starting distance: what holds the clump together.
-  static const double _cohesion = 100;
+  static const double _cohesion = 200;
 
   /// Drag on each circle's movement, and on tied circles moving apart or together. The second
   /// calms the fast jitter without making the slow wobble any less springy.
-  static const double _damping = 6;
-  static const double _viscosity = 5;
+  static const double _damping = 3.5;
+  static const double _viscosity = 3;
 
   /// Fixed physics step, so the feel is the same at any frame rate.
-  static const double _step = 1 / 240;
+  static const double _step = 1 / 120;
 
   /// How far, at most, the side facing the finger is pulled out towards it.
-  double get maxReach => radius * 1.6;
+  double get maxReach => radius * 1.9;
 
   /// The circles the blob is drawn from.
   List<GooCircle> get circles => [
@@ -127,11 +159,29 @@ class GooSimulation extends ChangeNotifier {
   /// Whether it is sitting still as a plain circle of [radius].
   bool get atRest => _atRest;
 
+  /// Whether it is restless: wobbling, drifting about and now and then giving a little shudder,
+  /// even with nothing touching it.
+  bool get lively => _lively;
+  set lively(bool value) {
+    if (value == _lively) return;
+    _lively = value;
+    if (value) {
+      _atRest = false;
+      _nextPoke = 0.1;
+    } else {
+      _wander.fillRange(0, _wander.length, Offset.zero);
+    }
+  }
+
   /// How strong the circles' summed pull (see [gooField]) is round the edge of the resting blob:
   /// the level at which the outline is traced, so that at rest it is a circle of [radius].
   late final double edgeStrength = () {
-    final rest = circles;
-    const samples = 48;
+    // From the resting places, whatever it happens to be doing when first asked.
+    final rest = [
+      for (var i = 0; i < _rest.length; i++)
+        (centre: _rest[i], radius: _sizes[i]),
+    ];
+    const samples = 24;
     var sum = 0.0;
     for (var k = 0; k < samples; k++) {
       sum += gooField(
@@ -147,7 +197,7 @@ class GooSimulation extends ChangeNotifier {
     _pressed = true;
     // A quick squeeze inwards makes the touch wobble through the whole blob.
     for (var i = 0; i < _rest.length; i++) {
-      _velocity[i] -= _rest[i] * 4;
+      _velocity[i] -= _rest[i] * 6;
     }
     drag(at);
   }
@@ -176,7 +226,7 @@ class GooSimulation extends ChangeNotifier {
     // Gives more and more slowly the further the finger goes, like stretching something elastic.
     final reach = maxReach * (1 - math.exp(-distance / maxReach));
     final pull = distance == 0 ? Offset.zero : finger / distance * reach;
-    final squeeze = _pressed ? 0.08 : 0.0;
+    final squeeze = _pressed ? 0.12 : 0.0;
     final towards = finger.direction;
 
     for (var i = 0; i < _strandStart; i++) {
@@ -187,7 +237,7 @@ class GooSimulation extends ChangeNotifier {
           : math.cos(rest.direction - towards);
       final front = math.pow(math.max(0.0, along), 6) * out;
       // The body leans a little towards the finger and bulges on that side; the strand does the reaching.
-      _target[i] = pull * (0.15 + 0.4 * front) * _eagerness[i] - rest * squeeze;
+      _target[i] = pull * (0.18 + 0.5 * front) * _eagerness[i] - rest * squeeze;
     }
     final stretch = reach / maxReach;
     for (var k = 0; k < _strandSizes.length; k++) {
@@ -201,13 +251,14 @@ class GooSimulation extends ChangeNotifier {
   bool advance(double seconds) {
     // After a long stall (a dropped frame, the app paused), carry on rather than catch up.
     var remaining = math.min(seconds, 1 / 30);
+    if (_lively) _wanderOn(remaining);
     while (remaining > 0) {
       final dt = math.min(_step, remaining);
       _integrate(dt);
       remaining -= dt;
     }
 
-    var moving = isHeld;
+    var moving = isHeld || _lively;
     for (var i = 0; i < _rest.length && !moving; i++) {
       moving =
           _velocity[i].distance > 0.5 ||
@@ -222,14 +273,68 @@ class GooSimulation extends ChangeNotifier {
     return moving;
   }
 
+  /// Moves the idle wobble on by [seconds]: lumps travelling round the edge, the whole blob drifting
+  /// a little, and every so often a poke from a random side.
+  void _wanderOn(double seconds) {
+    _time += seconds;
+    // The whole blob sways about on two unrelated rhythms, so it never quite repeats.
+    final sway = Offset(
+          math.sin(_time * 4.1 + _drift[0]) + 0.6 * math.sin(_time * 8.3 + _drift[1]),
+          math.sin(_time * 3.5 + _drift[2]) + 0.6 * math.sin(_time * 7.4 + _drift[3]),
+        ) *
+        (radius * 0.012);
+    // Each wave swells and fades on its own, so the shape keeps changing.
+    final sizes = [
+      for (final (k, wave) in _waves.indexed)
+        wave.size * (0.6 + 0.4 * math.sin(_time * (2.6 + 1.1 * k) + wave.phase)),
+    ];
+    for (var i = 0; i < _rest.length; i++) {
+      final rest = _rest[i];
+      if (i >= _strandStart || rest == Offset.zero) {
+        _wander[i] = sway;
+        continue;
+      }
+      final angle = rest.direction;
+      final out = rest.distance / (radius * _outerRing);
+      var bulge = 0.0;
+      for (final (k, wave) in _waves.indexed) {
+        bulge += sizes[k] * math.sin(wave.lobes * angle + wave.phase + _time * wave.speed);
+      }
+      _wander[i] = sway + Offset.fromDirection(angle, bulge * radius * out);
+    }
+
+    _nextPoke -= seconds;
+    if (_nextPoke <= 0) {
+      _nextPoke = 0.06 + _random.nextDouble() * 0.14;
+      // A nudge from one side, rippling through the clump, and a small bump popping out of (or
+      // dimpling into) the edge somewhere.
+      final from = _random.nextDouble() * 2 * math.pi;
+      final strength = radius * (0.4 + _random.nextDouble() * 0.6);
+      final bumpAt = _random.nextDouble() * 2 * math.pi;
+      final bump = radius * (0.9 + _random.nextDouble() * 0.9) * (_random.nextDouble() < 0.7 ? 1 : -1);
+      for (var i = 0; i < _strandStart; i++) {
+        final rest = _rest[i];
+        if (rest == Offset.zero) {
+          _velocity[i] -= Offset.fromDirection(from, strength * 0.5);
+          continue;
+        }
+        final facing = math.max(0.0, math.cos(rest.direction - from));
+        final near = math.pow(math.max(0.0, math.cos(rest.direction - bumpAt)), 12).toDouble();
+        final out = rest.distance / (radius * _outerRing);
+        _velocity[i] += Offset.fromDirection(rest.direction, bump * near * out) -
+            Offset.fromDirection(from, strength * facing);
+      }
+    }
+  }
+
   void _integrate(double dt) {
     final n = _rest.length;
-    final force = List<Offset>.generate(
-      n,
-      (i) =>
-          (_target[i] - _offset[i]) * _stiffness * _eagerness[i] -
-          _velocity[i] * _damping,
-    );
+    final force = _force;
+    for (var i = 0; i < n; i++) {
+      force[i] =
+          (_target[i] + _wander[i] - _offset[i]) * _stiffness * _eagerness[i] -
+          _velocity[i] * _damping;
+    }
     for (final (i, j, length) in _ties) {
       final between = (_rest[j] + _offset[j]) - (_rest[i] + _offset[i]);
       final distance = between.distance;
@@ -263,6 +368,9 @@ class GooBlob extends StatefulWidget {
   /// A finger's global position for the blob to reach towards, or null to let go.
   final ValueListenable<Offset?>? reachTowards;
 
+  /// Whether it wobbles and drifts about on its own, e.g. while it is the thing being used.
+  final bool lively;
+
   /// Drawn in the middle, following the blob's body as it moves.
   final Widget child;
 
@@ -273,6 +381,7 @@ class GooBlob extends StatefulWidget {
     required this.shadowColor,
     required this.child,
     this.reachTowards,
+    this.lively = false,
   });
 
   @override
@@ -303,6 +412,20 @@ class _GooBlobState extends State<GooBlob> with SingleTickerProviderStateMixin {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _updateLively();
+  }
+
+  void _updateLively() {
+    if (!mounted) return;
+    final lively = widget.lively && !_still;
+    if (_goo.lively == lively) return;
+    _goo.lively = lively;
+    _wake();
+  }
+
+  @override
   void didUpdateWidget(GooBlob old) {
     super.didUpdateWidget(old);
     if (old.reachTowards != widget.reachTowards) {
@@ -313,6 +436,7 @@ class _GooBlobState extends State<GooBlob> with SingleTickerProviderStateMixin {
       _goo.dispose();
       _goo = GooSimulation(radius: widget.size / 2);
     }
+    _updateLively();
   }
 
   @override
@@ -422,7 +546,7 @@ class _GooPainter extends CustomPainter {
                 (centre: middle + c.centre, radius: c.radius),
             ],
             goo.edgeStrength,
-            goo.radius / 15,
+            goo.radius / 12,
           );
 
     canvas.drawPath(
@@ -466,11 +590,12 @@ class _GooPainter extends CustomPainter {
 
 /// How far each circle's pull reaches, as a multiple of its radius. Larger melts circles into each
 /// other sooner and gives thicker necks between lumps pulled apart.
-const double _spread = 1.4;
+const double _spread = 1.55;
 
 /// The [gooField] level at which a circle on its own is traced at exactly its own radius. Circles
 /// close enough to add to each other's pull swell out and melt together at this level.
-const double gooLoneLevel = (1 - 1 / (_spread * _spread)) * (1 - 1 / (_spread * _spread));
+const double gooLoneLevel =
+    (1 - 1 / (_spread * _spread)) * (1 - 1 / (_spread * _spread));
 
 /// The circles' summed pull at [point]: each pulls hardest at its centre, fading smoothly to
 /// nothing [_spread] radii away. Where circles are close, their pulls add up and fill the gap
@@ -632,7 +757,8 @@ class RoundHitArea extends SingleChildRenderObjectWidget {
 class _RenderRoundHitArea extends RenderProxyBox {
   @override
   bool hitTest(BoxHitTestResult result, {required Offset position}) {
-    if ((position - size.center(Offset.zero)).distance > size.shortestSide / 2) {
+    if ((position - size.center(Offset.zero)).distance >
+        size.shortestSide / 2) {
       return false;
     }
     return super.hitTest(result, position: position);

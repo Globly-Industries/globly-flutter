@@ -204,7 +204,17 @@ class PostButton extends StatelessWidget {
   /// A finger's global position to stretch towards, for a touch that started somewhere else.
   final ValueListenable<Offset?>? reachTowards;
 
-  const PostButton({super.key, required this.onPressed, required this.tooltip, this.size = 60, this.reachTowards});
+  /// Whether it wobbles and drifts about on its own (see [GooBlob.lively]).
+  final bool lively;
+
+  const PostButton({
+    super.key,
+    required this.onPressed,
+    required this.tooltip,
+    this.size = 60,
+    this.reachTowards,
+    this.lively = false,
+  });
 
   static const _gradient = LinearGradient(
     begin: Alignment.topLeft,
@@ -229,6 +239,7 @@ class PostButton extends StatelessWidget {
               gradient: _gradient,
               shadowColor: AppTheme.brand.withValues(alpha: 0.3),
               reachTowards: reachTowards,
+              lively: lively,
               child: Icon(Icons.add_rounded, color: Colors.white, size: size * 0.55),
             ),
           ),

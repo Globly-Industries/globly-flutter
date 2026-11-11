@@ -168,6 +168,31 @@ void main() {
     expect(find.text('Photo'), findsOneWidget);
   });
 
+  testWidgets('once open, dragging again from anywhere onto an option selects it', (tester) async {
+    final selected = await pumpWheel(tester);
+    final center = tester.getCenter(find.byType(PostButton).first);
+
+    // A first drag that chooses nothing leaves the wheel open.
+    var finger = await tester.startGesture(center);
+    await finger.moveBy(const Offset(0, 60));
+    await tester.pump();
+    await settle(tester);
+    await finger.up();
+    await tester.pump();
+    await settle(tester);
+    expect(selected, isEmpty);
+
+    // A second drag, starting on the button's copy on the wheel.
+    finger = await tester.startGesture(center);
+    await finger.moveBy(const Offset(10, -20));
+    await finger.moveTo(center + Offset.fromDirection(-115 * 3.14159265 / 180, 110));
+    await tester.pump();
+    await finger.up();
+    await tester.pump();
+    await settle(tester);
+    expect(selected, [MediaType.video]);
+  });
+
   testWidgets('a plain tap still opens the wheel without selecting anything', (tester) async {
     final selected = await pumpWheel(tester);
 
