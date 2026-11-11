@@ -10,6 +10,9 @@ import '../widgets/errors.dart';
 import '../widgets/glass.dart';
 import '../widgets/media_view.dart';
 
+const _quickEmoji = ['👍', '❤️', '😂', '😮', '😢', '🔥'];
+const _maxCommentLength = 1000;
+
 /// Full post with rating (votes, comments, report) and edit/delete for the author.
 /// Pops with `true` if the post changed (edited, deleted or hidden) so lists can refresh.
 class PostDetailScreen extends StatefulWidget {
@@ -79,6 +82,65 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     } catch (e) {
       if (mounted) showMessage(context, e);
     }
+  }
+
+  /// Smiley button in the comment field; opens a small bubble of quick emoji that type into the comment.
+  /// The bubble opens at the smiley's left edge; shift it left so its right edge lines up with the
+  /// send button's (the smiley and send are two 48-wide icon buttons). Fixed sizes keep the width known.
+  static const _emojiButtonSize = 40.0;
+  static const _emojiBubblePadding = 4.0;
+  static final _emojiBubbleWidth = _quickEmoji.length * _emojiButtonSize + 2 * _emojiBubblePadding;
+
+  Widget _emojiPicker(ColorScheme scheme) {
+    return MenuAnchor(
+      alignmentOffset: Offset(2 * 48 - _emojiBubbleWidth, 8),
+      style: MenuStyle(
+        padding: const WidgetStatePropertyAll(
+          EdgeInsets.symmetric(horizontal: _emojiBubblePadding),
+        ),
+        shape: WidgetStatePropertyAll(
+          RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+        ),
+      ),
+      menuChildren: [
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (final e in _quickEmoji)
+              Builder(
+                builder: (context) => IconButton(
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints.tightFor(width: _emojiButtonSize, height: _emojiButtonSize),
+                  style: const ButtonStyle(tapTargetSize: MaterialTapTargetSize.shrinkWrap),
+                  icon: Text(e, style: const TextStyle(fontSize: 22)),
+                  onPressed: () {
+                    _insertEmoji(e);
+                    MenuController.maybeOf(context)?.close();
+                  },
+                ),
+              ),
+          ],
+        ),
+      ],
+      builder: (context, menu, _) => IconButton(
+        icon: const Icon(Icons.emoji_emotions_outlined),
+        color: menu.isOpen ? scheme.primary : scheme.onSurfaceVariant,
+        onPressed: () => menu.isOpen ? menu.close() : menu.open(),
+      ),
+    );
+  }
+
+  /// Types [emoji] into the comment at the cursor (replacing any selection), or at the end if it has no cursor.
+  void _insertEmoji(String emoji) {
+    final value = _commentText.value;
+    if (value.text.length + emoji.length > _maxCommentLength) return;
+    final sel = value.selection;
+    final start = sel.isValid ? sel.start : value.text.length;
+    final end = sel.isValid ? sel.end : value.text.length;
+    _commentText.value = TextEditingValue(
+      text: value.text.replaceRange(start, end, emoji),
+      selection: TextSelection.collapsed(offset: start + emoji.length),
+    );
   }
 
   Future<void> _send() async {
@@ -343,13 +405,19 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                       controller: _commentText,
                       decoration: InputDecoration(
                         hintText: l.addComment,
-                        suffixIcon: IconButton(
-                          icon: const Icon(Icons.send_rounded),
-                          color: scheme.primary,
-                          onPressed: _sending ? null : () => _send(),
-                        ),
+                            suffixIcon: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                _emojiPicker(scheme),
+                                IconButton(
+                                  icon: const Icon(Icons.send_rounded),
+                                  color: scheme.primary,
+                                  onPressed: _sending ? null : () => _send(),
+                                ),
+                              ],
+                            ),
                       ),
-                      maxLength: 1000,
+                          maxLength: _maxCommentLength,
                       minLines: 1,
                       maxLines: 4,
                     ),
