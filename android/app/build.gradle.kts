@@ -61,6 +61,17 @@ android {
     }
 }
 
+// Release APKs only carry 64-bit ARM native code.
+androidComponents {
+    onVariants(selector().withBuildType("release")) { variant ->
+        variant.packaging.jniLibs.excludes.addAll(
+            listOf("lib/armeabi-v7a/**", "lib/x86_64/**", "lib/x86/**")
+        )
+        // Compress native code in the APK
+        variant.packaging.jniLibs.useLegacyPackaging.set(true)
+    }
+}
+
 kotlin {
     compilerOptions {
         jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
