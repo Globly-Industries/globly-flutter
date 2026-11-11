@@ -46,8 +46,15 @@ jobs:
           KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           RELEASES_TOKEN: ${{ secrets.RELEASES_TOKEN }}
         run: |
-          if [ -z "$KEYSTORE_BASE64" ] || [ -z "$KEYSTORE_PASSWORD" ] || [ -z "$KEY_ALIAS" ] || [ -z "$RELEASES_TOKEN" ]; then
-            echo "::error::Signing or release secrets are missing, see 'Android releases' in the README."
+          # Names each missing secret; a value of only spaces or line breaks counts as missing.
+          missing=""
+          for pair in ANDROID_KEYSTORE_BASE64:KEYSTORE_BASE64 ANDROID_KEYSTORE_PASSWORD:KEYSTORE_PASSWORD \
+                      ANDROID_KEY_ALIAS:KEY_ALIAS RELEASES_TOKEN:RELEASES_TOKEN; do
+            var="${pair#*:}"
+            if [ -z "$(printf '%s' "${!var:-}" | tr -d '[:space:]')" ]; then missing="$missing ${pair%%:*}"; fi
+          done
+          if [ -n "$missing" ]; then
+            echo "::error::Missing or blank secrets:$missing. See 'Android releases' in the README."
             exit 1
           fi
           echo "$KEYSTORE_BASE64" | base64 --decode > android/app/upload.jks
