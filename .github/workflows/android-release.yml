@@ -1,13 +1,18 @@
 # Pushing a version tag (git tag v0.1.1 && git push origin v0.1.1) builds a signed APK and publishes
-# it as a GitHub release. Setup and required secrets: see "Android releases" in the README.
+# it as a release in the public Globly-Industries/globly-releases repo, where the app looks for
+# updates. Setup and required secrets: see "Android releases" in the README.
 name: Android release
 
 on:
   push:
     tags: ['v[0-9]+.[0-9]+.[0-9]+']
 
+# Publishing goes to the other repo with RELEASES_TOKEN, so this token only needs to read the code.
 permissions:
-  contents: write
+  contents: read
+
+env:
+  RELEASES_REPO: Globly-Industries/globly-releases
 
 jobs:
   release:
@@ -15,6 +20,9 @@ jobs:
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # Full history and tags, for the release notes (commits since the previous tag).
+          fetch-depth: 0
 
       - uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
         with:
@@ -36,9 +44,10 @@ jobs:
           KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          RELEASES_TOKEN: ${{ secrets.RELEASES_TOKEN }}
         run: |
-          if [ -z "$KEYSTORE_BASE64" ] || [ -z "$KEYSTORE_PASSWORD" ] || [ -z "$KEY_ALIAS" ]; then
-            echo "::error::Signing secrets are missing, see 'Android releases' in the README."
+          if [ -z "$KEYSTORE_BASE64" ] || [ -z "$KEYSTORE_PASSWORD" ] || [ -z "$KEY_ALIAS" ] || [ -z "$RELEASES_TOKEN" ]; then
+            echo "::error::Signing or release secrets are missing, see 'Android releases' in the README."
             exit 1
           fi
           echo "$KEYSTORE_BASE64" | base64 --decode > android/app/upload.jks
@@ -65,8 +74,17 @@ jobs:
           flutter build apk --release --build-name="${TAG#v}" --build-number="$BUILD_NUMBER"
           mv build/app/outputs/flutter-apk/app-release.apk "globly-$TAG.apk"
 
+      # The releases repo has no code, so GitHub's generated notes would be empty; list this repo's
+      # commits since the previous tag instead.
       - name: Publish release
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.RELEASES_TOKEN }}
           TAG: ${{ github.ref_name }}
-        run: gh release create "$TAG" "globly-$TAG.apk" --title "Globly $TAG" --generate-notes
+        run: |
+          prev=$(git describe --tags --abbrev=0 "$TAG^" 2>/dev/null || true)
+          {
+            echo "## Changes"
+            echo
+            git log --no-merges --format='- %s' "${prev:+$prev..}$TAG"
+          } > notes.md
+          gh release create "$TAG" "globly-$TAG.apk" --repo "$RELEASES_REPO" --title "Globly $TAG" --notes-file notes.md

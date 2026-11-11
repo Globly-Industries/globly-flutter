@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 
 import '../api/api_client.dart';
 import '../models/models.dart';
 import '../state/auth_state.dart';
 import '../state/settings_state.dart';
+import '../update/app_updater.dart';
+import '../update/update_dialog.dart';
 import '../widgets/common.dart';
 import '../widgets/errors.dart';
 import '../widgets/glass.dart';
@@ -46,6 +49,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _hasMore = false;
   Object? _error;
   String? _loadedFor;
+  String? _version;
+
+  @override
+  void initState() {
+    super.initState();
+    if (AppUpdater.supported) {
+      PackageInfo.fromPlatform().then((info) {
+        if (mounted) setState(() => _version = info.version);
+      });
+    }
+  }
 
   /// Loads posts the first time a (new) user is seen.
   void _ensureLoaded(String? userId) {
@@ -177,6 +191,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
             onChanged: (code) => settings.setLocale(code == null ? null : Locale(code)),
           ),
         ),
+        if (AppUpdater.supported)
+          ListTile(
+            leading: const Icon(Icons.system_update_rounded),
+            title: Text(l.checkForUpdates),
+            subtitle: _version == null ? null : Text(l.appVersion(_version!)),
+            onTap: () => checkForUpdates(context),
+          ),
         if (auth.isAdmin)
           ListTile(
             leading: const Icon(Icons.admin_panel_settings_rounded),

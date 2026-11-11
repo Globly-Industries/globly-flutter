@@ -160,5 +160,19 @@
   "errNotFound": "Not found. It may have been removed.",
   "errTooMany": "Too many attempts. Try again in a minute.",
   "errInvalidInput": "Please check what you entered.",
-  "errGeneric": "Something went wrong."
+  "errGeneric": "Something went wrong.",
+
+  "checkForUpdates": "Check for updates",
+  "appVersion": "Version {version}",
+  "@appVersion": { "placeholders": { "version": { "type": "String" } } },
+  "upToDate": "You have the latest version.",
+  "updateCheckFailed": "Couldn't check for updates.",
+  "updateAvailable": "Update available",
+  "updateAvailableBody": "Version {version} is available. You have {current}.",
+  "@updateAvailableBody": { "placeholders": { "version": { "type": "String" }, "current": { "type": "String" } } },
+  "updateLater": "Later",
+  "updateNow": "Update",
+  "updateDownloading": "Downloading… {percent}%",
+  "@updateDownloading": { "placeholders": { "percent": { "type": "int" } } },
+  "updateFailed": "The update couldn't be downloaded."
 }

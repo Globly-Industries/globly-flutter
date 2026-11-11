@@ -150,5 +150,16 @@
   "errNotFound": "Nav atrasts. Iespējams, tas ir dzēsts.",
   "errTooMany": "Pārāk daudz mēģinājumu. Mēģiniet pēc minūtes.",
   "errInvalidInput": "Lūdzu, pārbaudiet ievadītos datus.",
-  "errGeneric": "Kaut kas nogāja greizi."
+  "errGeneric": "Kaut kas nogāja greizi.",
+
+  "checkForUpdates": "Pārbaudīt atjauninājumus",
+  "appVersion": "Versija {version}",
+  "upToDate": "Jums ir jaunākā versija.",
+  "updateCheckFailed": "Neizdevās pārbaudīt atjauninājumus.",
+  "updateAvailable": "Pieejams atjauninājums",
+  "updateAvailableBody": "Pieejama versija {version}. Jums ir {current}.",
+  "updateLater": "Vēlāk",
+  "updateNow": "Atjaunināt",
+  "updateDownloading": "Lejupielādē… {percent}%",
+  "updateFailed": "Atjauninājumu neizdevās lejupielādēt."
 }

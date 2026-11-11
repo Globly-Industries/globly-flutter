@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../models/models.dart';
 import '../state/auth_state.dart';
+import '../update/update_dialog.dart';
 import '../widgets/common.dart';
 import '../widgets/glass.dart';
 import '../widgets/media_capture.dart';
@@ -35,6 +36,10 @@ class _HomeShellState extends State<HomeShell> {
   void initState() {
     super.initState();
     _recoverCapture();
+    // After the first frame, so the dialog has a Navigator and Localizations to use.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) checkForUpdates(context, silent: true);
+    });
   }
 
   /// Picks up a photo or video whose capture was cut short by Android closing the app.

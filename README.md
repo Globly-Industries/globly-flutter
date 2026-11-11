@@ -31,16 +31,23 @@ If pub reports version conflicts with your Flutter version, run `flutter pub upg
 
 ## Android releases
 
-Pushing a version tag builds a signed APK and publishes it as a GitHub release
-(`.github/workflows/android-release.yml`):
+Pushing a version tag builds a signed APK and publishes it as a release in the public
+[globly-releases](https://github.com/Globly-Industries/globly-releases) repo
+(`.github/workflows/android-release.yml`). The release notes list this repo's commits since the
+previous tag.
 
 ```bash
 git tag v0.1.1
 git push origin v0.1.1
 ```
 
-To install, open the release on the phone, download the `.apk` and allow installs from that app when
+To install, open the latest release in globly-releases on the phone, download the `.apk` and allow installs from that app when
 Android asks. Later releases install as updates over the old one.
+
+After that the app updates itself: on startup (and from Profile -> Check for updates) it asks
+globly-releases for the latest release and, if it's newer, offers to download the APK and open Android's installer
+(`lib/update/`). Only CI-built releases can update this way; local builds are signed with the debug
+key, so Android rejects the update over them. Prereleases and drafts are never offered.
 
 One-time setup: create an upload key with a letters-and-digits password, and back up the file and
 password outside the repo. If the key is lost, testers have to uninstall to move to a new one.
@@ -56,6 +63,10 @@ Add these repository secrets under Settings -> Secrets and variables -> Actions:
 | `ANDROID_KEYSTORE_BASE64` | output of `base64 -w0 upload.jks` |
 | `ANDROID_KEYSTORE_PASSWORD` | the keystore password |
 | `ANDROID_KEY_ALIAS` | `upload` |
+| `RELEASES_TOKEN` | fine-grained personal access token: resource owner Globly-Industries, only the globly-releases repo, permission Contents: Read and write |
+
+The releases repo needs at least one commit (e.g. a README) before the first release, because the
+release's tag is created on its default branch.
 
 ## Running
 

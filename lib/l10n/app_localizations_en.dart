@@ -453,4 +453,40 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get errGeneric => 'Something went wrong.';
+
+  @override
+  String get checkForUpdates => 'Check for updates';
+
+  @override
+  String appVersion(String version) {
+    return 'Version $version';
+  }
+
+  @override
+  String get upToDate => 'You have the latest version.';
+
+  @override
+  String get updateCheckFailed => 'Couldn\'t check for updates.';
+
+  @override
+  String get updateAvailable => 'Update available';
+
+  @override
+  String updateAvailableBody(String version, String current) {
+    return 'Version $version is available. You have $current.';
+  }
+
+  @override
+  String get updateLater => 'Later';
+
+  @override
+  String get updateNow => 'Update';
+
+  @override
+  String updateDownloading(int percent) {
+    return 'Downloading… $percent%';
+  }
+
+  @override
+  String get updateFailed => 'The update couldn\'t be downloaded.';
 }

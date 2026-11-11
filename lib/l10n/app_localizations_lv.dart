@@ -459,4 +459,40 @@ class AppLocalizationsLv extends AppLocalizations {
 
   @override
   String get errGeneric => 'Kaut kas nogāja greizi.';
+
+  @override
+  String get checkForUpdates => 'Pārbaudīt atjauninājumus';
+
+  @override
+  String appVersion(String version) {
+    return 'Versija $version';
+  }
+
+  @override
+  String get upToDate => 'Jums ir jaunākā versija.';
+
+  @override
+  String get updateCheckFailed => 'Neizdevās pārbaudīt atjauninājumus.';
+
+  @override
+  String get updateAvailable => 'Pieejams atjauninājums';
+
+  @override
+  String updateAvailableBody(String version, String current) {
+    return 'Pieejama versija $version. Jums ir $current.';
+  }
+
+  @override
+  String get updateLater => 'Vēlāk';
+
+  @override
+  String get updateNow => 'Atjaunināt';
+
+  @override
+  String updateDownloading(int percent) {
+    return 'Lejupielādē… $percent%';
+  }
+
+  @override
+  String get updateFailed => 'Atjauninājumu neizdevās lejupielādēt.';
 }
