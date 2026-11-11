@@ -21,13 +21,13 @@ ui.ImageFilter get _blur => ui.ImageFilter.blur(sigmaX: glassBlurSigma, sigmaY: 
 /// The map is a native view that Flutter's blur can't reach, so what is behind a panel stays sharp.
 /// The fills are nearly solid to keep panels readable without the blur.
 Color glassTint(BuildContext context, {bool strong = false}) =>
-    (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF16201A) : Colors.white)
-        .withValues(alpha: strong ? 0.95 : 0.9);
+    (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF16201A) : Colors.white).withValues(
+      alpha: strong ? 0.95 : 0.9,
+    );
 
 /// Fill for small buttons floating on the map; solid enough to stand out without the blur.
 Color glassButtonTint(BuildContext context) =>
-    (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF16201A) : Colors.white)
-        .withValues(alpha: 0.85);
+    (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF16201A) : Colors.white).withValues(alpha: 0.85);
 
 /// Thin light edge that makes glass surfaces read as raised panes.
 Color glassEdge(BuildContext context) => Theme.of(context).brightness == Brightness.dark
@@ -96,24 +96,33 @@ class GlassBackground extends StatelessWidget {
     final glow = theme.brightness == Brightness.dark ? 0.05 : 0.07;
 
     Widget blob(Alignment center, Color color, double radius) => DecoratedBox(
-          decoration: BoxDecoration(
-            gradient: RadialGradient(
-              center: center,
-              radius: radius,
-              colors: [color.withValues(alpha: glow), color.withValues(alpha: 0)],
-            ),
-          ),
-        );
-
-    return Stack(fit: StackFit.expand, children: [
-      RepaintBoundary(
-        child: Stack(fit: StackFit.expand, children: [
-          ColoredBox(color: theme.scaffoldBackgroundColor),
-          blob(const Alignment(-1, -1), AppTheme.brandLight, 1.2),
-        ]),
+      decoration: BoxDecoration(
+        gradient: RadialGradient(
+          center: center,
+          radius: radius,
+          colors: [
+            color.withValues(alpha: glow),
+            color.withValues(alpha: 0),
+          ],
+        ),
       ),
-      child,
-    ]);
+    );
+
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        RepaintBoundary(
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              ColoredBox(color: theme.scaffoldBackgroundColor),
+              blob(const Alignment(-1, -1), AppTheme.brandLight, 1.2),
+            ],
+          ),
+        ),
+        child,
+      ],
+    );
   }
 }
 
@@ -129,14 +138,14 @@ class GlassScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => GlassBackground(
-        child: Scaffold(
-          backgroundColor: Colors.transparent,
-          extendBodyBehindAppBar: behindBar,
-          appBar: appBar,
-          body: body,
-          floatingActionButton: floatingActionButton,
-        ),
-      );
+    child: Scaffold(
+      backgroundColor: Colors.transparent,
+      extendBodyBehindAppBar: behindBar,
+      appBar: appBar,
+      body: body,
+      floatingActionButton: floatingActionButton,
+    ),
+  );
 }
 
 /// App bar with a frosted background for content scrolling underneath.
@@ -152,18 +161,18 @@ class GlassAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) => AppBar(
-        title: title,
-        actions: actions,
-        bottom: bottom,
-        flexibleSpace: ClipRect(
-          child: BackdropFilter.grouped(
-            filter: _blur,
-            // SizedBox.expand: the app bar only gives this a maximum height, and a childless
-            // ColoredBox would otherwise collapse to nothing.
-            child: ColoredBox(color: glassTint(context), child: const SizedBox.expand()),
-          ),
-        ),
-      );
+    title: title,
+    actions: actions,
+    bottom: bottom,
+    flexibleSpace: ClipRect(
+      child: BackdropFilter.grouped(
+        filter: _blur,
+        // SizedBox.expand: the app bar only gives this a maximum height, and a childless
+        // ColoredBox would otherwise collapse to nothing.
+        child: ColoredBox(color: glassTint(context), child: const SizedBox.expand()),
+      ),
+    ),
+  );
 }
 
 /// Modal bottom sheet on a frosted pane, with its own drag handle.
@@ -178,18 +187,21 @@ Future<T?> showGlassSheet<T>(BuildContext context, {required WidgetBuilder build
     builder: (sheetContext) => GlassPanel(
       borderRadius: radius,
       strong: true,
-      child: Column(mainAxisSize: MainAxisSize.min, children: [
-        Container(
-          width: 40,
-          height: 4,
-          margin: const EdgeInsets.symmetric(vertical: 14),
-          decoration: BoxDecoration(
-            color: Theme.of(sheetContext).colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
-            borderRadius: BorderRadius.circular(2),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 40,
+            height: 4,
+            margin: const EdgeInsets.symmetric(vertical: 14),
+            decoration: BoxDecoration(
+              color: Theme.of(sheetContext).colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
+              borderRadius: BorderRadius.circular(2),
+            ),
           ),
-        ),
-        Flexible(child: builder(sheetContext)),
-      ]),
+          Flexible(child: builder(sheetContext)),
+        ],
+      ),
     ),
   );
 }
@@ -256,18 +268,19 @@ class GlassNavItem {
   const GlassNavItem(this.icon, this.selectedIcon, this.label);
 }
 
-/// Frosted bottom bar with a curved notch in the middle holding the round post button.
+/// Flat bottom bar across the full width with square corners, a hairline along its top, and a
+/// curved notch in the middle holding the round post button.
 ///
 /// The first [leadingCount] items sit left of the button, the rest right of it.
 class GlassNavBar extends StatelessWidget {
-  static const double _barHeight = 68;
-  static const double buttonSize = 60;
+  static const double _barHeight = 60;
+  static const double buttonSize = 56;
 
   /// How far the button rises above the bar's top edge.
-  static const double overhang = 26;
+  static const double overhang = 22;
 
   /// Even space between the button and the notch around it.
-  static const double notchGap = 6;
+  static const double notchGap = 5;
 
   final List<GlassNavItem> items;
   final int leadingCount;
@@ -277,6 +290,9 @@ class GlassNavBar extends StatelessWidget {
   /// Sits in the notch; must be [buttonSize] across.
   final Widget postButton;
 
+  /// Solid black with light icons, for use over full-screen photos and video.
+  final bool dark;
+
   const GlassNavBar({
     super.key,
     required this.items,
@@ -284,62 +300,71 @@ class GlassNavBar extends StatelessWidget {
     required this.selectedIndex,
     required this.onSelected,
     required this.postButton,
+    this.dark = false,
   });
 
   Widget _item(int i) => Expanded(
-        child: _NavButton(item: items[i], selected: i == selectedIndex, onTap: () => onSelected(i)),
-      );
+    child: _NavButton(item: items[i], selected: i == selectedIndex, onTap: () => onSelected(i)),
+  );
 
   @override
   Widget build(BuildContext context) {
     final inset = MediaQuery.paddingOf(context).bottom;
     final clipper = _NotchClipper();
+    final scheme = (dark ? _darkBarTheme : Theme.of(context)).colorScheme;
+    final hairline = dark ? Colors.white.withValues(alpha: 0.14) : scheme.outlineVariant;
 
-    return SizedBox(
+    final Widget bar = SizedBox(
       height: overhang + _barHeight + inset,
       // Unclipped, so the post button can stretch up past the bar's top.
-      child: Stack(clipBehavior: Clip.none, children: [
-        Positioned.fill(child: CustomPaint(painter: _BarShadowPainter(clipper))),
-        // The clip also limits touches to the bar's shape, so the corners and the area beside
-        // the button still reach the page underneath.
-        Positioned.fill(
-          child: ClipPath(
-            clipper: clipper,
-            child: BackdropFilter.grouped(
-              filter: _blur,
-              child: ColoredBox(color: glassTint(context)),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          // The clip also limits touches to the bar's shape, so the area beside the button above
+          // the bar still reaches the page underneath.
+          Positioned.fill(
+            child: ClipPath(
+              clipper: clipper,
+              child: dark
+                  ? const ColoredBox(color: Colors.black)
+                  : BackdropFilter.grouped(
+                      filter: _blur,
+                      child: ColoredBox(color: glassTint(context)),
+                    ),
             ),
           ),
-        ),
-        Positioned.fill(child: IgnorePointer(child: CustomPaint(painter: _BarEdgePainter(clipper, glassEdge(context))))),
-        Positioned(
-          left: 0,
-          right: 0,
-          top: overhang,
-          height: _barHeight + inset,
-          // Own Material so tab ripples draw above the glass, not behind it.
-          child: Material(
-            type: MaterialType.transparency,
-            child: Padding(
-              padding: EdgeInsets.only(bottom: inset),
-              child: Row(children: [
-                Expanded(child: Row(children: [for (var i = 0; i < leadingCount; i++) _item(i)])),
-                const SizedBox(width: buttonSize + 24),
-                Expanded(child: Row(children: [for (var i = leadingCount; i < items.length; i++) _item(i)])),
-              ]),
+          Positioned.fill(
+            child: IgnorePointer(child: CustomPaint(painter: _BarEdgePainter(clipper, hairline))),
+          ),
+          Positioned(
+            left: 0,
+            right: 0,
+            top: overhang,
+            height: _barHeight + inset,
+            // Own Material so tab ripples draw above the glass, not behind it.
+            child: Material(
+              type: MaterialType.transparency,
+              child: Padding(
+                padding: EdgeInsets.only(bottom: inset),
+                child: Row(
+                  children: [
+                    Expanded(child: Row(children: [for (var i = 0; i < leadingCount; i++) _item(i)])),
+                    const SizedBox(width: buttonSize + 2 * notchGap + 28),
+                    Expanded(child: Row(children: [for (var i = leadingCount; i < items.length; i++) _item(i)])),
+                  ],
+                ),
+              ),
             ),
           ),
-        ),
-        Positioned(
-          top: 0,
-          left: 0,
-          right: 0,
-          child: Center(child: postButton),
-        ),
-      ]),
+          Positioned(top: 0, left: 0, right: 0, child: Center(child: postButton)),
+        ],
+      ),
     );
+    return dark ? Theme(data: _darkBarTheme, child: bar) : bar;
   }
 }
+
+final _darkBarTheme = AppTheme.dark();
 
 class _NavButton extends StatelessWidget {
   final GlassNavItem item;
@@ -350,53 +375,48 @@ class _NavButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final color = selected ? scheme.primary : scheme.onSurfaceVariant;
+    final color = selected ? scheme.primary : scheme.onSurfaceVariant.withValues(alpha: 0.7);
 
     return Semantics(
       button: true,
       selected: selected,
       excludeSemantics: true,
       label: item.label,
-      child: InkWell(
+      child: InkResponse(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(18),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(18),
-            // Soft glow rising from the bottom of the selected tab.
-            gradient: LinearGradient(
-              begin: Alignment.bottomCenter,
-              end: Alignment.topCenter,
-              colors: [scheme.primary.withValues(alpha: selected ? 0.12 : 0), scheme.primary.withValues(alpha: 0)],
-            ),
+        radius: 34,
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(selected ? item.selectedIcon : item.icon, color: color, size: 25),
+              const SizedBox(height: 3),
+              AnimatedDefaultTextStyle(
+                duration: const Duration(milliseconds: 220),
+                style: TextStyle(
+                  color: color,
+                  fontSize: 11.5,
+                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                ),
+                child: Text(item.label, maxLines: 1, overflow: TextOverflow.ellipsis),
+              ),
+            ],
           ),
-          child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-            Icon(selected ? item.selectedIcon : item.icon, color: color, size: 26),
-            const SizedBox(height: 3),
-            Text(
-              item.label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(color: color, fontSize: 12, fontWeight: selected ? FontWeight.w700 : FontWeight.w500),
-            ),
-          ]),
         ),
       ),
     );
   }
 }
 
-/// Bar outline: rounded top corners, and a circular notch sharing the button's centre so the gap
-/// around the button is even. Small rounded shoulders join the notch to the top edge.
+/// Bar outline: a straight top edge across the full width with square corners, and a circular
+/// notch sharing the button's centre so the gap around the button is even. Small rounded shoulders
+/// join the notch to the top edge.
 class _NotchClipper extends CustomClipper<ui.Path> {
-  static const double _corner = 24;
-  static const double _shoulder = 14;
+  static const double _shoulder = 12;
   static const double _notchRadius = GlassNavBar.buttonSize / 2 + GlassNavBar.notchGap;
 
-  @override
-  ui.Path getClip(Size size) {
+  /// Just the top edge with the notch, from the left side to the right.
+  ui.Path topEdge(Size size) {
     final cx = size.width / 2;
     const top = GlassNavBar.overhang;
     const buttonCenterY = GlassNavBar.buttonSize / 2;
@@ -411,49 +431,25 @@ class _NotchClipper extends CustomClipper<ui.Path> {
     final meetDx = dx * scale;
 
     return ui.Path()
-      ..moveTo(0, size.height)
-      ..lineTo(0, top + _corner)
-      ..arcToPoint(const Offset(_corner, top), radius: const Radius.circular(_corner))
+      ..moveTo(0, top)
       ..lineTo(cx - dx, top)
       ..arcToPoint(Offset(cx - meetDx, meetY), radius: const Radius.circular(_shoulder))
       ..arcToPoint(Offset(cx + meetDx, meetY), radius: const Radius.circular(_notchRadius), clockwise: false)
       ..arcToPoint(Offset(cx + dx, top), radius: const Radius.circular(_shoulder))
-      ..lineTo(size.width - _corner, top)
-      ..arcToPoint(Offset(size.width, top + _corner), radius: const Radius.circular(_corner))
-      ..lineTo(size.width, size.height)
-      ..close();
+      ..lineTo(size.width, top);
   }
+
+  @override
+  ui.Path getClip(Size size) => topEdge(size)
+    ..lineTo(size.width, size.height)
+    ..lineTo(0, size.height)
+    ..close();
 
   @override
   bool shouldReclip(_NotchClipper oldClipper) => false;
 }
 
-/// Soft shadow outside the bar only, so it doesn't muddy the glass.
-class _BarShadowPainter extends CustomPainter {
-  final _NotchClipper clipper;
-  _BarShadowPainter(this.clipper);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final bar = clipper.getClip(size);
-    final outside = ui.Path.combine(
-      ui.PathOperation.difference,
-      ui.Path()..addRect(Offset.zero & size),
-      bar,
-    );
-    canvas.save();
-    canvas.clipPath(outside);
-    canvas.drawShadow(bar, Colors.black.withValues(alpha: 0.5), 10, true);
-    canvas.restore();
-  }
-
-  @override
-  bool shouldRepaint(_BarShadowPainter old) => false;
-
-  @override
-  bool? hitTest(Offset position) => false;
-}
-
+/// Hairline along the bar's top edge and around the notch.
 class _BarEdgePainter extends CustomPainter {
   final _NotchClipper clipper;
   final Color edge;
@@ -462,7 +458,7 @@ class _BarEdgePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     canvas.drawPath(
-      clipper.getClip(size),
+      clipper.topEdge(size),
       Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1

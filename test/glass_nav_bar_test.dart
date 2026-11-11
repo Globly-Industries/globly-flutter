@@ -13,23 +13,29 @@ void main() {
   Future<({List<int> tabs, List<String> taps})> pumpBar(WidgetTester tester) async {
     final tabs = <int>[];
     final taps = <String>[];
-    await tester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        extendBody: true,
-        body: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: () => taps.add('page'),
-          child: const SizedBox.expand(),
-        ),
-        bottomNavigationBar: GlassNavBar(
-          items: items,
-          leadingCount: 1,
-          selectedIndex: 0,
-          onSelected: tabs.add,
-          postButton: PostButton(onPressed: () => taps.add('post'), tooltip: 'New post', size: GlassNavBar.buttonSize),
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          extendBody: true,
+          body: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => taps.add('page'),
+            child: const SizedBox.expand(),
+          ),
+          bottomNavigationBar: GlassNavBar(
+            items: items,
+            leadingCount: 1,
+            selectedIndex: 0,
+            onSelected: tabs.add,
+            postButton: PostButton(
+              onPressed: () => taps.add('post'),
+              tooltip: 'New post',
+              size: GlassNavBar.buttonSize,
+            ),
+          ),
         ),
       ),
-    ));
+    );
     return (tabs: tabs, taps: taps);
   }
 
@@ -53,7 +59,7 @@ void main() {
   testWidgets('the notch follows a circle around the button, leaving an even gap', (tester) async {
     final result = await pumpBar(tester);
     final center = tester.getCenter(find.byType(PostButton));
-    const buttonRadius = 30.0;
+    const buttonRadius = GlassNavBar.buttonSize / 2;
 
     // Sweeps the lower part of the notch, from one side of the button to the other.
     for (final degrees in [30, 60, 90, 120, 150]) {
@@ -64,24 +70,28 @@ void main() {
       await tester.tapAt(center + direction * (buttonRadius + GlassNavBar.notchGap / 2));
       expect(result.taps, ['page'], reason: 'in the gap at $degrees degrees');
 
-      // Just past the gap: the glass takes the touch.
+      // Just past the gap: the bar takes the touch.
       result.taps.clear();
       await tester.tapAt(center + direction * (buttonRadius + GlassNavBar.notchGap + 2));
       expect(result.taps, isEmpty, reason: 'on the bar at $degrees degrees');
     }
   });
 
-  testWidgets('touches outside the bar shape reach the page, touches on the glass do not', (tester) async {
+  testWidgets('the bar spans the full width with square corners; above it is the page', (tester) async {
     final result = await pumpBar(tester);
     final bar = tester.getRect(find.byType(GlassNavBar));
+    final screen = tester.view.physicalSize / tester.view.devicePixelRatio;
+    expect(bar.left, 0);
+    expect(bar.right, screen.width);
 
     // Above the bar's top edge, away from the button: the strip reserved for the overhang.
     await tester.tapAt(Offset(bar.left + 40, bar.top + GlassNavBar.overhang / 2));
     expect(result.taps, ['page']);
 
-    // Inside the bar's curved notch, below the button.
+    // The very corners of the bar's top edge belong to the bar.
     result.taps.clear();
-    await tester.tapAt(bar.topCenter + const Offset(0, GlassNavBar.overhang + 60));
+    await tester.tapAt(Offset(bar.left + 1, bar.top + GlassNavBar.overhang + 1));
+    await tester.tapAt(Offset(bar.right - 1, bar.top + GlassNavBar.overhang + 1));
     expect(result.taps, isEmpty);
   });
 }

@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../api/api_client.dart';
 import '../models/models.dart';
 import '../state/auth_state.dart';
+import '../state/settings_state.dart';
 import '../update/update_dialog.dart';
 import '../widgets/common.dart';
 import '../widgets/glass.dart';
@@ -157,6 +158,8 @@ class _HomeShellState extends State<HomeShell> {
           selectedIndex: _index,
           onSelected: (i) => setState(() => _index = i),
           postButton: _postButton(wheelFansUp, GlassNavBar.buttonSize),
+          // Black over the full-screen feed, like the pages behind it.
+          dark: _index == 1 && context.select<SettingsState, bool>((s) => s.immersiveFeed),
         ),
       ),
     );
