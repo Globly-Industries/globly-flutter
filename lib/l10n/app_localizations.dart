@@ -356,30 +356,6 @@ abstract class AppLocalizations {
   /// **'No comments yet.'**
   String get noComments;
 
-  /// No description provided for @allComments.
-  ///
-  /// In en, this message translates to:
-  /// **'All'**
-  String get allComments;
-
-  /// No description provided for @textComments.
-  ///
-  /// In en, this message translates to:
-  /// **'Text'**
-  String get textComments;
-
-  /// No description provided for @emojiComments.
-  ///
-  /// In en, this message translates to:
-  /// **'Emoji'**
-  String get emojiComments;
-
-  /// No description provided for @reacted.
-  ///
-  /// In en, this message translates to:
-  /// **'reacted {emoji}'**
-  String reacted(String emoji);
-
   /// No description provided for @viewsCount.
   ///
   /// In en, this message translates to:
@@ -881,7 +857,7 @@ abstract class AppLocalizations {
   /// No description provided for @errCommentEmpty.
   ///
   /// In en, this message translates to:
-  /// **'Write a comment or pick an emoji.'**
+  /// **'Write a comment first.'**
   String get errCommentEmpty;
 
   /// No description provided for @errCannotDeleteSelf.

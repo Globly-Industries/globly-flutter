@@ -139,20 +139,6 @@ class AppLocalizationsLv extends AppLocalizations {
   String get noComments => 'Vēl nav komentāru.';
 
   @override
-  String get allComments => 'Visi';
-
-  @override
-  String get textComments => 'Teksts';
-
-  @override
-  String get emojiComments => 'Emocijzīmes';
-
-  @override
-  String reacted(String emoji) {
-    return 'reaģēja ar $emoji';
-  }
-
-  @override
   String viewsCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
@@ -436,8 +422,7 @@ class AppLocalizationsLv extends AppLocalizations {
   String get errTextRequired => 'Vispirms uzrakstiet tekstu.';
 
   @override
-  String get errCommentEmpty =>
-      'Uzrakstiet komentāru vai izvēlieties emocijzīmi.';
+  String get errCommentEmpty => 'Vispirms uzrakstiet komentāru.';
 
   @override
   String get errCannotDeleteSelf => 'Šeit nevar dzēst savu kontu.';

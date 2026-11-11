@@ -184,17 +184,15 @@ class MapPoint {
 class Comment {
   final String id;
   final Author author;
-  final String? body;
-  final String? emoji;
+  final String body;
   final DateTime createdAt;
 
-  const Comment(this.id, this.author, this.body, this.emoji, this.createdAt);
+  const Comment(this.id, this.author, this.body, this.createdAt);
 
   factory Comment.fromJson(Map<String, dynamic> j) => Comment(
         j['id'],
         Author.fromJson(j['author']),
         j['body'],
-        j['emoji'],
         DateTime.parse(j['createdAt']),
       );
 }

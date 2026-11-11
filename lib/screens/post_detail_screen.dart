@@ -10,9 +10,7 @@ import '../widgets/errors.dart';
 import '../widgets/glass.dart';
 import '../widgets/media_view.dart';
 
-const quickEmoji = ['👍', '❤️', '😂', '😮', '😢', '🔥'];
-
-/// Full post with rating (votes, emoji, comments, report) and edit/delete for the author.
+/// Full post with rating (votes, comments, report) and edit/delete for the author.
 /// Pops with `true` if the post changed (edited, deleted or hidden) so lists can refresh.
 class PostDetailScreen extends StatefulWidget {
   final String postId;
@@ -26,8 +24,6 @@ class PostDetailScreen extends StatefulWidget {
   State<PostDetailScreen> createState() => _PostDetailScreenState();
 }
 
-enum _CommentKind { all, text, emoji }
-
 class _PostDetailScreenState extends State<PostDetailScreen> {
   late final ApiClient _api = context.read<ApiClient>();
   final _commentText = TextEditingController();
@@ -35,8 +31,6 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   Post? _post;
   Object? _error;
   List<Comment> _comments = [];
-  Map<String, int> _emoji = {};
-  _CommentKind _kind = _CommentKind.all;
   bool _sending = false;
   bool _changed = false;
 
@@ -57,23 +51,15 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     try {
       final post = await _api.post(widget.postId);
       if (mounted) setState(() => _post = post);
-      await _loadRatings();
+      await _loadComments();
     } catch (e) {
       if (mounted) setState(() => _error = e);
     }
   }
 
-  Future<void> _loadRatings() async {
-    final kind = switch (_kind) { _CommentKind.text => 'Text', _CommentKind.emoji => 'Emoji', _ => 'All' };
-    final results = await Future.wait([
-      _api.comments(widget.postId, kind: kind),
-      _api.emojiSummary(widget.postId),
-    ]);
-    if (!mounted) return;
-    setState(() {
-      _comments = (results[0] as Paged<Comment>).items;
-      _emoji = results[1] as Map<String, int>;
-    });
+  Future<void> _loadComments() async {
+    final page = await _api.comments(widget.postId);
+    if (mounted) setState(() => _comments = page.items);
   }
 
   bool _requireSignIn() {
@@ -95,15 +81,15 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     }
   }
 
-  Future<void> _send({String? emoji}) async {
+  Future<void> _send() async {
     if (!_requireSignIn()) return;
-    final body = emoji == null ? _commentText.text.trim() : null;
-    if (emoji == null && (body == null || body.isEmpty)) return;
+    final body = _commentText.text.trim();
+    if (body.isEmpty) return;
     setState(() => _sending = true);
     try {
-      await _api.addComment(widget.postId, body: body, emoji: emoji);
+      await _api.addComment(widget.postId, body);
       _commentText.clear();
-      await _loadRatings();
+      await _loadComments();
     } catch (e) {
       if (mounted) showMessage(context, e);
     } finally {
@@ -116,7 +102,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     if (!await confirm(context, l.deleteCommentTitle, l.cannotUndo)) return;
     try {
       await _api.deleteComment(c.id);
-      await _loadRatings();
+      await _loadComments();
     } catch (e) {
       if (mounted) showMessage(context, e);
     }
@@ -340,42 +326,10 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                 Text('${post.upvotes} ↑  ${post.downvotes} ↓',
                     style: theme.textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant)),
               ]),
-              const SizedBox(height: 12),
-
-              // Emoji reactions
-              Wrap(spacing: 6, runSpacing: 6, children: [
-                for (final e in quickEmoji)
-                  ActionChip(
-                    visualDensity: VisualDensity.compact,
-                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    labelPadding: const EdgeInsets.symmetric(horizontal: 4),
-                    label: Text(_emoji[e] == null ? e : '$e ${_emoji[e]}', style: const TextStyle(fontSize: 16)),
-                    backgroundColor: _emoji[e] == null ? null : scheme.primaryContainer.withValues(alpha: 0.6),
-                    onPressed: _sending ? null : () => _send(emoji: e),
-                  ),
-              ]),
               const Divider(height: 40),
 
               // Comments
-              Row(children: [
-                Text(l.comments, style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
-                const Spacer(),
-                SegmentedButton<_CommentKind>(
-                  showSelectedIcon: false,
-                  style: const ButtonStyle(visualDensity: VisualDensity.compact),
-                  segments: [
-                    ButtonSegment(value: _CommentKind.all, label: Text(l.allComments)),
-                    ButtonSegment(value: _CommentKind.text, label: Text(l.textComments)),
-                    ButtonSegment(value: _CommentKind.emoji, icon: const Icon(Icons.emoji_emotions_outlined, size: 18)),
-                  ],
-                  selected: {_kind},
-                  onSelectionChanged: (s) {
-                    setState(() => _kind = s.first);
-                    _loadRatings();
-                  },
-                ),
-              ]),
+              Text(l.comments, style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
               const SizedBox(height: 12),
               if (auth.isSignedIn)
                 Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -418,7 +372,6 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final canDelete = auth.user?.id == c.author.id || auth.isAdmin;
-    final emojiOnly = c.body == null && c.emoji != null;
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
@@ -445,10 +398,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                     style: theme.textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant)),
               ]),
               const SizedBox(height: 2),
-              if (emojiOnly)
-                Text(context.l10n.reacted(c.emoji!), style: theme.textTheme.bodyMedium)
-              else
-                Text([if (c.emoji != null) c.emoji!, c.body!].join(' '), style: theme.textTheme.bodyMedium),
+              Text(c.body, style: theme.textTheme.bodyMedium),
             ]),
           ),
         ),

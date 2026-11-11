@@ -1,7 +1,7 @@
 # Globly (Flutter, Android)
 
 Geospatial social media app: browse photo / video / audio / text posts on a world map or in a feed,
-publish posts tied to where they were captured, rate them with votes, emoji and comments.
+publish posts tied to where they were captured, rate them with votes and comments.
 
 Backend: [`globly-api`](https://github.com/Globly-Industries/globly-api).
 
@@ -134,7 +134,7 @@ lib/
     home_shell           bottom bar: Map, Feed + post wheel; profile opens from the top right
     map_screen           Mapbox globe + server-side clusters, tap to zoom/open
     feed_screen          newest (paged) or nearby
-    post_detail_screen   media playback, votes, emoji, comments, report, edit/delete
+    post_detail_screen   media playback, votes, comments, report, edit/delete
     create_post_screen   post form for captured media (retake), current GPS location, upload with progress
     profile_screen       my posts, sign out, admin entry
     admin_screen         reported-post queue, user removal

@@ -138,20 +138,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noComments => 'No comments yet.';
 
   @override
-  String get allComments => 'All';
-
-  @override
-  String get textComments => 'Text';
-
-  @override
-  String get emojiComments => 'Emoji';
-
-  @override
-  String reacted(String emoji) {
-    return 'reacted $emoji';
-  }
-
-  @override
   String viewsCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
@@ -431,7 +417,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get errTextRequired => 'Write something first.';
 
   @override
-  String get errCommentEmpty => 'Write a comment or pick an emoji.';
+  String get errCommentEmpty => 'Write a comment first.';
 
   @override
   String get errCannotDeleteSelf => 'You can\'t delete your own account here.';

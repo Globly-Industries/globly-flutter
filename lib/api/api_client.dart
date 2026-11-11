@@ -152,18 +152,11 @@ class ApiClient {
     return (upvotes: data['upvotes'] as int, downvotes: data['downvotes'] as int, hidden: data['isHidden'] as bool);
   }
 
-  /// kind: 'All', 'Text' or 'Emoji'.
-  Future<Paged<Comment>> comments(String postId, {int page = 1, String kind = 'All'}) async => Paged.fromJson(
-      await _call(() => _dio.get('/api/posts/$postId/comments', queryParameters: {'page': page, 'kind': kind})),
-      Comment.fromJson);
+  Future<Paged<Comment>> comments(String postId, {int page = 1}) async => Paged.fromJson(
+      await _call(() => _dio.get('/api/posts/$postId/comments', queryParameters: {'page': page})), Comment.fromJson);
 
-  Future<Map<String, int>> emojiSummary(String postId) async {
-    final data = await _call(() => _dio.get('/api/posts/$postId/emoji')) as List;
-    return {for (final e in data) e['emoji'] as String: e['count'] as int};
-  }
-
-  Future<Comment> addComment(String postId, {String? body, String? emoji}) async => Comment.fromJson(
-      await _call(() => _dio.post('/api/posts/$postId/comments', data: {'body': body, 'emoji': emoji})));
+  Future<Comment> addComment(String postId, String body) async =>
+      Comment.fromJson(await _call(() => _dio.post('/api/posts/$postId/comments', data: {'body': body})));
 
   Future<void> deleteComment(String id) => _call(() => _dio.delete('/api/comments/$id'));
 
