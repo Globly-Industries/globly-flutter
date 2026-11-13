@@ -9,6 +9,7 @@ import '../widgets/common.dart';
 import '../widgets/errors.dart';
 import '../widgets/glass.dart';
 import '../widgets/media_view.dart';
+import '../widgets/mention_text.dart';
 
 const _quickEmoji = ['👍', '❤️', '😂', '😮', '😢', '🔥'];
 const _maxCommentLength = 1000;
@@ -30,6 +31,7 @@ class PostDetailScreen extends StatefulWidget {
 class _PostDetailScreenState extends State<PostDetailScreen> {
   late final ApiClient _api = context.read<ApiClient>();
   final _commentText = TextEditingController();
+  final _commentFocus = FocusNode();
 
   Post? _post;
   Object? _error;
@@ -47,6 +49,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   @override
   void dispose() {
     _commentText.dispose();
+    _commentFocus.dispose();
     super.dispose();
   }
 
@@ -403,6 +406,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                   Expanded(
                     child: TextField(
                       controller: _commentText,
+                      focusNode: _commentFocus,
                       decoration: InputDecoration(
                         hintText: l.addComment,
                             suffixIcon: Row(
@@ -440,6 +444,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final canDelete = auth.user?.id == c.author.id || auth.isAdmin;
+    final canReply = auth.isSignedIn && auth.user?.id != c.author.id;
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
@@ -466,7 +471,9 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                     style: theme.textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant)),
               ]),
               const SizedBox(height: 2),
-              Text(c.body, style: theme.textTheme.bodyMedium),
+              MentionText(c.body, style: theme.textTheme.bodyMedium),
+              if (canReply)
+                ReplyButton(onPressed: () => startReply(_commentText, _commentFocus, c.author.userName)),
             ]),
           ),
         ),

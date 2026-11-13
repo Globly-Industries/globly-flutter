@@ -4,6 +4,7 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- Self-update: opens the installer for an APK downloaded from GitHub releases (lib/update/). -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <!-- Do NOT add CAMERA here: when declared, image_picker's camera intent requires it to be granted. -->
@@ -12,6 +13,16 @@
         android:label="Globly"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+        <!-- Push notifications (FCM): status bar icon, colour and channel. Channel is created in MainActivity. -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@drawable/ic_launcher_foreground" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_color"
+            android:resource="@color/notification" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="comments" />
         <activity
             android:name=".MainActivity"
             android:exported="true"

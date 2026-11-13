@@ -7,6 +7,7 @@ import '../state/auth_state.dart';
 import 'common.dart';
 import 'errors.dart';
 import 'glass.dart';
+import 'mention_text.dart';
 
 const _maxCommentLength = 1000;
 
@@ -30,6 +31,7 @@ class _CommentsSheet extends StatefulWidget {
 class _CommentsSheetState extends State<_CommentsSheet> {
   late final ApiClient _api = context.read<ApiClient>();
   final _text = TextEditingController();
+  final _focus = FocusNode();
   List<Comment>? _comments;
   Object? _error;
   bool _sending = false;
@@ -44,6 +46,7 @@ class _CommentsSheetState extends State<_CommentsSheet> {
   @override
   void dispose() {
     _text.dispose();
+    _focus.dispose();
     super.dispose();
   }
 
@@ -116,6 +119,7 @@ class _CommentsSheetState extends State<_CommentsSheet> {
         itemBuilder: (context, i) {
           final c = comments[i];
           final canDelete = auth.user?.id == c.author.id || auth.isAdmin;
+          final canReply = auth.isSignedIn && auth.user?.id != c.author.id;
           return Padding(
             padding: const EdgeInsets.symmetric(vertical: 8),
             child: Row(
@@ -144,7 +148,8 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                         ],
                       ),
                       const SizedBox(height: 2),
-                      Text(c.body, style: theme.textTheme.bodyMedium),
+                      MentionText(c.body, style: theme.textTheme.bodyMedium),
+                      if (canReply) ReplyButton(onPressed: () => startReply(_text, _focus, c.author.userName)),
                     ],
                   ),
                 ),
@@ -179,6 +184,7 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                 child: auth.isSignedIn
                     ? TextField(
                         controller: _text,
+                        focusNode: _focus,
                         maxLength: _maxCommentLength,
                         minLines: 1,
                         maxLines: 4,

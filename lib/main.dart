@@ -10,6 +10,8 @@ import 'screens/home_shell.dart';
 import 'screens/login_screen.dart';
 import 'state/auth_state.dart';
 import 'state/filter_state.dart';
+import 'state/notifications_state.dart';
+import 'state/push_service.dart';
 import 'state/settings_state.dart';
 import 'theme.dart';
 
@@ -19,6 +21,8 @@ void main() {
   final api = ApiClient();
   final auth = AuthState(api)..restore();
   final settings = SettingsState()..load();
+  final notifications = NotificationsState(api, auth);
+  final navigatorKey = GlobalKey<NavigatorState>();
 
   runApp(MultiProvider(
     providers: [
@@ -26,17 +30,21 @@ void main() {
       ChangeNotifierProvider.value(value: auth),
       ChangeNotifierProvider.value(value: settings),
       ChangeNotifierProvider(create: (_) => FilterState()),
+      ChangeNotifierProvider.value(value: notifications),
     ],
-    child: const GloblyApp(),
+    child: GloblyApp(navigatorKey: navigatorKey),
   ));
+  PushService(api, auth, settings, notifications, navigatorKey).start();
 }
 
 class GloblyApp extends StatelessWidget {
-  const GloblyApp({super.key});
+  final GlobalKey<NavigatorState>? navigatorKey;
+  const GloblyApp({super.key, this.navigatorKey});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: navigatorKey,
       onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(),

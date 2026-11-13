@@ -138,6 +138,28 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noComments => 'No comments yet.';
 
   @override
+  String get reply => 'Reply';
+
+  @override
+  String get notifications => 'Notifications';
+
+  @override
+  String get noNotifications => 'No notifications yet.';
+
+  @override
+  String get markAllRead => 'Mark all as read';
+
+  @override
+  String notificationComment(String user, String post) {
+    return '$user commented on \"$post\"';
+  }
+
+  @override
+  String notificationMention(String user, String post) {
+    return '$user mentioned you on \"$post\"';
+  }
+
+  @override
   String viewsCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,

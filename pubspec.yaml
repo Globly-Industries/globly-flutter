@@ -40,6 +40,11 @@ dependencies:
   # Self-update from GitHub releases (lib/update/)
   package_info_plus: ^9.0.1
 
+  # Push notifications on Android (lib/state/push_service.dart)
+  firebase_core: ^5.1.0
+  firebase_messaging: ^17.0.1
+  firebase_app_installations: ^0.5.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

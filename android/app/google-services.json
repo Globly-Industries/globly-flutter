@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "222356912203",
+    "project_id": "globly-ecad5",
+    "storage_bucket": "globly-ecad5.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:222356912203:android:694f3b2c54b868807135ce",
+        "android_client_info": {
+          "package_name": "com.globly.globly"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA3vqrQlAHUw5ITXtDDVq7lIpzNMykirz0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

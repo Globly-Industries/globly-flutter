@@ -356,6 +356,42 @@ abstract class AppLocalizations {
   /// **'No comments yet.'**
   String get noComments;
 
+  /// No description provided for @reply.
+  ///
+  /// In en, this message translates to:
+  /// **'Reply'**
+  String get reply;
+
+  /// No description provided for @notifications.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications'**
+  String get notifications;
+
+  /// No description provided for @noNotifications.
+  ///
+  /// In en, this message translates to:
+  /// **'No notifications yet.'**
+  String get noNotifications;
+
+  /// No description provided for @markAllRead.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark all as read'**
+  String get markAllRead;
+
+  /// No description provided for @notificationComment.
+  ///
+  /// In en, this message translates to:
+  /// **'{user} commented on \"{post}\"'**
+  String notificationComment(String user, String post);
+
+  /// No description provided for @notificationMention.
+  ///
+  /// In en, this message translates to:
+  /// **'{user} mentioned you on \"{post}\"'**
+  String notificationMention(String user, String post);
+
   /// No description provided for @viewsCount.
   ///
   /// In en, this message translates to:

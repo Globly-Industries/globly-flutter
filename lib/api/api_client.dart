@@ -180,6 +180,22 @@ class ApiClient {
   Future<bool> report(String postId, String? reason) async =>
       (await _call(() => _dio.post('/api/posts/$postId/report', data: {'reason': reason})))['isHidden'] as bool;
 
+  // ---------- Notifications ----------
+
+  Future<Paged<AppNotification>> notifications({int page = 1}) async => Paged.fromJson(
+      await _call(() => _dio.get('/api/notifications', queryParameters: {'page': page})), AppNotification.fromJson);
+
+  Future<int> unreadNotificationCount() async =>
+      (await _call(() => _dio.get('/api/notifications/unread-count')))['count'] as int;
+
+  Future<void> markNotificationRead(String id) => _call(() => _dio.post('/api/notifications/$id/read'));
+
+  /// Registers this device (its Firebase installation ID) for the signed-in user's pushes, in [language].
+  Future<void> registerDevice(String fid, String language) =>
+      _call(() => _dio.put('/api/devices', data: {'fid': fid, 'language': language}));
+
+  Future<void> markAllNotificationsRead() => _call(() => _dio.post('/api/notifications/read-all'));
+
   // ---------- Admin ----------
 
   Future<Paged<Post>> adminPosts({bool hiddenOnly = true, int page = 1}) async => Paged.fromJson(

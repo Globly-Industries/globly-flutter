@@ -139,6 +139,28 @@ class AppLocalizationsLv extends AppLocalizations {
   String get noComments => 'Vēl nav komentāru.';
 
   @override
+  String get reply => 'Atbildēt';
+
+  @override
+  String get notifications => 'Paziņojumi';
+
+  @override
+  String get noNotifications => 'Vēl nav paziņojumu.';
+
+  @override
+  String get markAllRead => 'Atzīmēt visus kā izlasītus';
+
+  @override
+  String notificationComment(String user, String post) {
+    return '$user komentēja \"$post\"';
+  }
+
+  @override
+  String notificationMention(String user, String post) {
+    return '$user pieminēja tevi pie \"$post\"';
+  }
+
+  @override
   String viewsCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,

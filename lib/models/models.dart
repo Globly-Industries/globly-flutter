@@ -223,6 +223,35 @@ class Comment {
       );
 }
 
+enum NotificationType { comment, mention }
+
+class AppNotification {
+  final String id;
+  final NotificationType type;
+  final Author actor;
+  final String postId;
+  final String postTitle;
+  final String commentBody;
+  final DateTime createdAt;
+  final bool isRead;
+
+  const AppNotification(
+      this.id, this.type, this.actor, this.postId, this.postTitle, this.commentBody, this.createdAt, this.isRead);
+
+  AppNotification markedRead() => AppNotification(id, type, actor, postId, postTitle, commentBody, createdAt, true);
+
+  factory AppNotification.fromJson(Map<String, dynamic> j) => AppNotification(
+        j['id'],
+        j['type'] == 'Mention' ? NotificationType.mention : NotificationType.comment,
+        Author.fromJson(j['actor']),
+        j['postId'],
+        j['postTitle'],
+        j['commentBody'],
+        DateTime.parse(j['createdAt']),
+        j['isRead'],
+      );
+}
+
 class AdminUser {
   final String id;
   final String userName;

@@ -13,6 +13,7 @@ import '../widgets/glass.dart';
 import '../widgets/immersive_feed.dart';
 import '../widgets/location.dart';
 import '../widgets/post_card.dart';
+import 'notifications_screen.dart';
 import 'post_detail_screen.dart';
 import 'profile_screen.dart';
 
@@ -176,7 +177,7 @@ class FeedScreenState extends State<FeedScreen> {
         topBar: _ImmersiveTopBar(
           mode: _mode,
           onMode: _setMode,
-          actions: [_viewToggle(true), _filterButton(filterActive), const ProfileButton(), const SizedBox(width: 4)],
+          actions: [_viewToggle(true), _filterButton(filterActive), const NotificationsButton(), const ProfileButton(), const SizedBox(width: 4)],
         ),
       ),
     );
@@ -188,7 +189,7 @@ class FeedScreenState extends State<FeedScreen> {
       behindBar: true,
       appBar: GlassAppBar(
         title: Text(l.navFeed),
-        actions: [_viewToggle(false), _filterButton(filterActive), const ProfileButton(), const SizedBox(width: 4)],
+        actions: [_viewToggle(false), _filterButton(filterActive), const NotificationsButton(), const ProfileButton(), const SizedBox(width: 4)],
       ),
       // Builder: only below the scaffold does MediaQuery include the app and bottom bars.
       body: Builder(

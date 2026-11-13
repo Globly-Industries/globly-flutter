@@ -17,6 +17,7 @@ import '../widgets/glass.dart';
 import '../widgets/location.dart';
 import '../widgets/mapbox_posts_map.dart';
 import '../widgets/post_card.dart';
+import 'notifications_screen.dart';
 import 'post_detail_screen.dart';
 import 'profile_screen.dart';
 
@@ -162,6 +163,7 @@ class MapScreenState extends State<MapScreen> {
               const Spacer(),
               Column(mainAxisSize: MainAxisSize.min, children: [
                 const ProfileButton(glass: true),
+                const NotificationsButton(glass: true, topGap: 8),
                 const SizedBox(height: 8),
                 _MapButton(
                   icon: Icons.my_location_rounded,

@@ -49,6 +49,12 @@
   "comments": "Komentāri",
   "addComment": "Pievienot komentāru…",
   "noComments": "Vēl nav komentāru.",
+  "reply": "Atbildēt",
+  "notifications": "Paziņojumi",
+  "noNotifications": "Vēl nav paziņojumu.",
+  "markAllRead": "Atzīmēt visus kā izlasītus",
+  "notificationComment": "{user} komentēja \"{post}\"",
+  "notificationMention": "{user} pieminēja tevi pie \"{post}\"",
   "viewsCount": "{count, plural, other{Skatījumi: {count}}}",
 
   "edit": "Rediģēt",
