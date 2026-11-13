@@ -40,4 +40,4 @@ Future<({String? chain, String? error})> attestCapture({
   }
 }
 
-String _short(String s) => s.length <= 300 ? s : s.substring(0, 300);
+String _short(String s) => s.length <= 1000 ? s : s.substring(0, 1000);
