@@ -223,10 +223,18 @@ class AppLocalizationsLv extends AppLocalizations {
       'Paslēpts: mūsu filtrs atzīmēja šo ierakstu kā, iespējams, nepiedienīgu. Moderators to pārskatīs.';
 
   @override
+  String get hiddenUnverified =>
+      'Paslēpts: nevarēja pārbaudīt, vai šis saturs uzņemts ar Globly Android lietotni šajā vietā. Moderators to pārskatīs.';
+
+  @override
   String get publish => 'Publicēt';
 
   @override
   String get published => 'Ieraksts publicēts.';
+
+  @override
+  String get publishedForReview =>
+      'Ieraksts nosūtīts. Nevarēja pārbaudīt, vai tas uzņemts ar Globly Android lietotni, tāpēc moderators to pārskatīs, pirms citi to redzēs.';
 
   @override
   String uploading(int percent) {
@@ -371,6 +379,9 @@ class AppLocalizationsLv extends AppLocalizations {
   }
 
   @override
+  String get reasonUnverified => 'Uzņemšana nav pārbaudīta';
+
+  @override
   String reasonFlagged(int percent) {
     return 'Atzīmēts: NSFW $percent%';
   }
@@ -446,6 +457,10 @@ class AppLocalizationsLv extends AppLocalizations {
   @override
   String get errCaptureExpired =>
       'Šis ieraksts ir pārāk vecs, lai to publicētu. Lūdzu, uzņemiet to vēlreiz.';
+
+  @override
+  String get errCaptureUnverified =>
+      'Saturu var publicēt tikai no Globly Android lietotnes.';
 
   @override
   String get errTextRequired => 'Vispirms uzrakstiet tekstu.';

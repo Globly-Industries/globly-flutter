@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import '../api/api_client.dart';
 import '../models/models.dart';
 import '../theme.dart';
+import '../widgets/capture_attestation.dart';
 import '../widgets/common.dart';
 import '../widgets/errors.dart';
 import '../widgets/glass.dart';
@@ -43,6 +44,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
 
   /// Set when the device only shares an approximate location.
   int? _locationRadius;
+  bool _locationMocked = false;
   Object? _locationError;
   double? _progress;
 
@@ -70,6 +72,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
         setState(() {
           _location = here.point;
           _locationRadius = here.radiusMeters;
+          _locationMocked = here.mocked;
         });
       }
     } catch (e) {
@@ -105,8 +108,18 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     setState(() => _progress = 0);
     try {
       final api = context.read<ApiClient>();
-      await _media?.ensureSealed(api);
-      await api.createPost(
+      final media = _media;
+      await media?.ensureSealed(api);
+      final attestation = media == null
+          ? null
+          : await attestCapture(
+              captureId: media.captureId,
+              sha256: media.sha256,
+              latitude: _location!.latitude,
+              longitude: _location!.longitude,
+              mockedLocation: _locationMocked,
+            );
+      final post = await api.createPost(
             title: _title.text.trim(),
             description: _description.text.trim(),
             mediaType: _type,
@@ -114,13 +127,14 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
             longitude: _location!.longitude,
             locationRadiusMeters: _locationRadius,
             file: _file,
-            captureId: _media?.captureId,
+            captureId: media?.captureId,
+            attestation: attestation,
             onProgress: (sent, total) {
               if (total > 0 && mounted) setState(() => _progress = sent / total);
             },
           );
       if (!mounted) return;
-      showMessage(context, l.published);
+      showMessage(context, post.isHidden ? l.publishedForReview : l.published);
       Navigator.pop(context, true);
     } catch (e) {
       if (mounted) {

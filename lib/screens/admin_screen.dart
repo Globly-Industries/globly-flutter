@@ -82,6 +82,7 @@ class _HiddenPostsState extends State<_HiddenPosts> {
       HiddenReason.downvotes => l.reasonDownvotes,
       HiddenReason.admin => l.reasonAdmin,
       HiddenReason.automatic => l.reasonAutomatic(percent),
+      HiddenReason.unverified => l.reasonUnverified,
       _ => l.reasonReports(p.reportCount),
     };
   }

@@ -181,6 +181,7 @@ class HiddenBanner extends StatelessWidget {
       HiddenReason.downvotes => l.hiddenDownvotes,
       HiddenReason.admin => l.hiddenAdmin,
       HiddenReason.automatic => l.hiddenAutomatic,
+      HiddenReason.unverified => l.hiddenUnverified,
       _ => l.hiddenReports,
     };
     return Container(

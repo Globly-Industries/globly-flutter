@@ -223,10 +223,18 @@ class AppLocalizationsEn extends AppLocalizations {
       'Hidden: our filter flagged this post as possibly explicit. A moderator will review it.';
 
   @override
+  String get hiddenUnverified =>
+      'Hidden: this media could not be verified as captured with the Globly Android app on this spot. A moderator will review it.';
+
+  @override
   String get publish => 'Publish';
 
   @override
   String get published => 'Post published.';
+
+  @override
+  String get publishedForReview =>
+      'Post sent. It could not be verified as captured with the Globly Android app, so a moderator will review it before others see it.';
 
   @override
   String uploading(int percent) {
@@ -367,6 +375,9 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get reasonUnverified => 'Capture not verified';
+
+  @override
   String reasonFlagged(int percent) {
     return 'Flagged: NSFW $percent%';
   }
@@ -441,6 +452,10 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get errCaptureExpired =>
       'This capture is too old to post. Please capture it again.';
+
+  @override
+  String get errCaptureUnverified =>
+      'Media can only be posted from the Globly Android app.';
 
   @override
   String get errTextRequired => 'Write something first.';

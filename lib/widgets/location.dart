@@ -21,7 +21,7 @@ class LocationException implements Exception {
 
 /// The device position. [radiusMeters] is set when the user only shares an approximate location
 /// (Android's or iOS's "Approximate" permission): the real position is somewhere within it.
-typedef DeviceLocation = ({LatLng point, int? radiusMeters});
+typedef DeviceLocation = ({LatLng point, int? radiusMeters, bool mocked});
 
 /// Radius to show for an approximate fix. Never below 2 km, the margin Android blurs by, even if a
 /// fix claims better; capped at what the API accepts.
@@ -109,7 +109,7 @@ Future<DeviceLocation> _currentWebLocation() async {
       throw LocationException(LocationError.unavailable, e.toString());
     }
   }
-  return (point: LatLng(pos.latitude, pos.longitude), radiusMeters: null);
+  return (point: LatLng(pos.latitude, pos.longitude), radiusMeters: null, mocked: false);
 }
 
 /// Asks for permission if needed and returns the device position.
@@ -132,6 +132,7 @@ Future<DeviceLocation> currentDeviceLocation() async {
     return (
       point: LatLng(pos.latitude, pos.longitude),
       radiusMeters: await _isApproximate() ? approximateRadiusMeters(pos.accuracy) : null,
+      mocked: pos.isMocked,
     );
   } catch (_) {
     throw LocationError.unavailable;

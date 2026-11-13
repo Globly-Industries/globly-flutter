@@ -35,5 +35,29 @@ class MainActivity : FlutterActivity() {
                 else -> result.notImplemented()
             }
         }
+
+        // Capture attestation (lib/widgets/capture_attestation.dart).
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "globly/attestation").setMethodCallHandler { call, result ->
+            when (call.method) {
+                "attest" -> {
+                    val challenge = call.argument<ByteArray>("challenge")
+                    if (challenge == null) {
+                        result.error("bad_args", "challenge is required", null)
+                        return@setMethodCallHandler
+                    }
+                    // Key generation can be slow.
+                    Thread {
+                        val outcome = runCatching { CaptureAttestation.attest(challenge) }
+                        runOnUiThread {
+                            outcome.fold(
+                                { result.success(it) },
+                                { result.error("attestation_failed", it.message, null) },
+                            )
+                        }
+                    }.start()
+                }
+                else -> result.notImplemented()
+            }
+        }
     }
 }

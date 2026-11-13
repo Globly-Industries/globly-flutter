@@ -500,6 +500,12 @@ abstract class AppLocalizations {
   /// **'Hidden: our filter flagged this post as possibly explicit. A moderator will review it.'**
   String get hiddenAutomatic;
 
+  /// No description provided for @hiddenUnverified.
+  ///
+  /// In en, this message translates to:
+  /// **'Hidden: this media could not be verified as captured with the Globly Android app on this spot. A moderator will review it.'**
+  String get hiddenUnverified;
+
   /// No description provided for @publish.
   ///
   /// In en, this message translates to:
@@ -511,6 +517,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Post published.'**
   String get published;
+
+  /// No description provided for @publishedForReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Post sent. It could not be verified as captured with the Globly Android app, so a moderator will review it before others see it.'**
+  String get publishedForReview;
 
   /// No description provided for @uploading.
   ///
@@ -770,6 +782,12 @@ abstract class AppLocalizations {
   /// **'Auto-hidden: NSFW {percent}%'**
   String reasonAutomatic(int percent);
 
+  /// No description provided for @reasonUnverified.
+  ///
+  /// In en, this message translates to:
+  /// **'Capture not verified'**
+  String get reasonUnverified;
+
   /// No description provided for @reasonFlagged.
   ///
   /// In en, this message translates to:
@@ -889,6 +907,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This capture is too old to post. Please capture it again.'**
   String get errCaptureExpired;
+
+  /// No description provided for @errCaptureUnverified.
+  ///
+  /// In en, this message translates to:
+  /// **'Media can only be posted from the Globly Android app.'**
+  String get errCaptureUnverified;
 
   /// No description provided for @errTextRequired.
   ///

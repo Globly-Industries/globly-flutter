@@ -18,7 +18,9 @@ enum HiddenReason {
   admin,
 
   /// The NSFW filter is nearly sure the media is explicit.
-  automatic;
+  automatic,
+
+  unverified;
 
   static HiddenReason fromApi(String? value) =>
       HiddenReason.values.firstWhere((r) => r.name.toLowerCase() == value?.toLowerCase(), orElse: () => HiddenReason.none);
