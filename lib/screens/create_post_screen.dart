@@ -128,7 +128,8 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
             locationRadiusMeters: _locationRadius,
             file: _file,
             captureId: media?.captureId,
-            attestation: attestation,
+            attestation: attestation?.chain,
+            attestationError: attestation?.error,
             onProgress: (sent, total) {
               if (total > 0 && mounted) setState(() => _progress = sent / total);
             },

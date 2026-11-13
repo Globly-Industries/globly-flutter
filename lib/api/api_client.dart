@@ -129,6 +129,7 @@ class ApiClient {
     XFile? file,
     String? captureId,
     String? attestation,
+    String? attestationError,
     void Function(int sent, int total)? onProgress,
   }) async {
     final form = FormData.fromMap({
@@ -140,6 +141,7 @@ class ApiClient {
       if (locationRadiusMeters != null) 'locationRadiusMeters': locationRadiusMeters.toString(),
       'captureId': ?captureId,
       'attestation': ?attestation,
+      'attestationError': ?attestationError,
       if (file != null)
         // Web has no file system: upload from memory there, stream from disk on Android.
         'file': kIsWeb
