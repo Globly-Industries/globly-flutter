@@ -24,7 +24,12 @@ class PushService {
   /// "user|fid|language" last sent to the API, so it is only re-sent when something changes.
   String? _registered;
   bool _wasSignedIn = false;
+  String? _reportedError;
+  bool _ready = false;
+  String? _initError;
   Future<void> _queue = Future.value();
+
+  static const _stepTimeout = Duration(seconds: 30);
 
   PushService(this._api, this._auth, this._settings, this._notifications, this._navigator);
 
@@ -32,20 +37,23 @@ class PushService {
 
   Future<void> start() async {
     if (!supported) return;
+    _auth.addListener(_sync);
+    _settings.addListener(_sync);
     try {
       await Firebase.initializeApp();
     } catch (e) {
-      debugPrint('Push disabled: $e');
+      // Reported once signed in, by _syncNow.
+      _initError = 'initializeApp: $e';
+      await _sync();
       return;
     }
+    _ready = true;
     final messaging = FirebaseMessaging.instance;
     // In the foreground Android shows nothing; just update the badge.
     FirebaseMessaging.onMessage.listen((_) => _notifications.refresh());
     FirebaseMessaging.onMessageOpenedApp.listen(_open);
     // A (re)registration, e.g. after sign-in or a reinstall: tell the API again.
     messaging.onRegistered.listen((_) => _sync(force: true));
-    _auth.addListener(_sync);
-    _settings.addListener(_sync);
 
     // A push tapped while the app was closed.
     final initial = await messaging.getInitialMessage();
@@ -57,6 +65,10 @@ class PushService {
   Future<void> _sync({bool force = false}) => _queue = _queue.then((_) => _syncNow(force));
 
   Future<void> _syncNow(bool force) async {
+    if (!_ready) {
+      if (_initError != null && _auth.isSignedIn) await _report(_initError!);
+      return;
+    }
     final messaging = FirebaseMessaging.instance;
     if (!_auth.isSignedIn) {
       if (_wasSignedIn) {
@@ -68,19 +80,34 @@ class PushService {
       return;
     }
     _wasSignedIn = true;
+    var step = 'requestPermission';
     try {
-      await messaging.requestPermission();
-      await messaging.register();
-      final fid = await FirebaseInstallations.instance.getId();
+      final settings = await messaging.requestPermission().timeout(_stepTimeout);
+      if (settings.authorizationStatus == AuthorizationStatus.denied) return;
+      step = 'register';
+      await messaging.register().timeout(_stepTimeout);
+      step = 'getId';
+      final fid = await FirebaseInstallations.instance.getId().timeout(_stepTimeout);
       if (!_auth.isSignedIn) return;
       final language = (_settings.locale ?? PlatformDispatcher.instance.locale).languageCode;
       final key = '${_auth.user?.id}|$fid|$language';
       if (key == _registered && !force) return;
+      step = 'registerDevice';
       await _api.registerDevice(fid, language);
       _registered = key;
     } catch (e) {
-      debugPrint('Push registration failed: $e');
+      await _report('$step: $e');
     }
+  }
+
+  /// Sends a setup failure to the API's log, once per distinct error.
+  Future<void> _report(String error) async {
+    debugPrint('Push setup failed: $error');
+    if (error == _reportedError) return;
+    _reportedError = error;
+    try {
+      await _api.reportPushError(error.length > 2000 ? error.substring(0, 2000) : error);
+    } catch (_) {/* offline: nothing more to do */}
   }
 
   /// Tapped push: open its post, after the current frame so the navigator exists.

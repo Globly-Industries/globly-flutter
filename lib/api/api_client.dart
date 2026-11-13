@@ -194,6 +194,10 @@ class ApiClient {
   Future<void> registerDevice(String fid, String language) =>
       _call(() => _dio.put('/api/devices', data: {'fid': fid, 'language': language}));
 
+  /// Tells the API why push setup failed on this device, for its logs.
+  Future<void> reportPushError(String message) =>
+      _call(() => _dio.post('/api/devices/error', data: {'message': message}));
+
   Future<void> markAllNotificationsRead() => _call(() => _dio.post('/api/notifications/read-all'));
 
   // ---------- Admin ----------
