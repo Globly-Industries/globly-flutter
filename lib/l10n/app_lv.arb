@@ -96,6 +96,7 @@
   "locationRequired": "Atrašanās vieta ir obligāta.",
   "locationServicesOff": "Atrašanās vietas pakalpojumi ir izslēgti.",
   "locationDenied": "Atļauja izmantot atrašanās vietu netika piešķirta.",
+  "locationDeniedBrowser": "Atrašanās vieta šai vietnei ir bloķēta. Atļauj to pārlūka vietnes iestatījumos (iPhone ierīcē pārbaudi arī Iestatījumi → Konfidencialitāte un drošība → Atrašanās vietas pakalpojumi → Safari vietnes → Lietotnes lietošanas laikā), tad spied “Mēģināt vēlreiz”.",
   "locationUnavailable": "Neizdevās noteikt atrašanās vietu.",
   "couldNotLoadVideo": "Neizdevās ielādēt video",
 

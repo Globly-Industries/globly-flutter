@@ -7,6 +7,18 @@ import 'package:latlong2/latlong.dart';
 /// Why the location could not be read (translated by widgets/errors.dart).
 enum LocationError implements Exception { servicesOff, denied, unavailable }
 
+/// A [LocationError] with the browser's own explanation, shown with the message so that the
+/// different causes behind the same error code can be told apart.
+class LocationException implements Exception {
+  final LocationError reason;
+  final String? detail;
+
+  const LocationException(this.reason, [this.detail]);
+
+  @override
+  String toString() => 'LocationException($reason, $detail)';
+}
+
 /// The device position. [radiusMeters] is set when the user only shares an approximate location
 /// (Android's or iOS's "Approximate" permission): the real position is somewhere within it.
 typedef DeviceLocation = ({LatLng point, int? radiusMeters});
@@ -32,11 +44,12 @@ Future<LatLng?> knownLocationWithoutAsking() async {
     if (kIsWeb) {
       // Only when the browser says it is already granted, so nothing prompts; else null.
       if (await Geolocator.checkPermission() != LocationPermission.whileInUse) return null;
+      // Already granted, so no prompt can be open: a short overall limit is safe here.
       final pos = await _webPosition(
         highAccuracy: false,
         timeLimit: const Duration(seconds: 2),
         maximumAge: const Duration(minutes: 5),
-      );
+      ).timeout(const Duration(seconds: 3));
       return LatLng(pos.latitude, pos.longitude);
     }
     if (!await Geolocator.isLocationServiceEnabled()) return null;
@@ -54,15 +67,24 @@ Future<LatLng?> knownLocationWithoutAsking() async {
   }
 }
 
-/// One browser position request. geolocator_web passes the time limit to the browser in the wrong
-/// unit (microseconds as milliseconds), so it is enforced here instead.
+/// One browser position request.
+///
+/// The time limit goes to the browser, whose timeout only starts once the user has allowed
+/// location. A timer here would also count the time the permission prompts are open. iOS shows two
+/// prompts (Safari's for the site, then the system's), and slow answers then failed as "could not
+/// get your location".
+///
+/// geolocator_web passes `timeLimit.inMicroseconds` to the browser as milliseconds, so the limit
+/// is handed over in microseconds to arrive as the intended milliseconds. The Dart timeout is only
+/// a backstop for browsers that never call back, and allows plenty of time for the prompts.
 Future<Position> _webPosition({required bool highAccuracy, required Duration timeLimit, Duration? maximumAge}) =>
     Geolocator.getCurrentPosition(
       locationSettings: WebSettings(
         accuracy: highAccuracy ? LocationAccuracy.high : LocationAccuracy.low,
+        timeLimit: Duration(microseconds: timeLimit.inMilliseconds),
         maximumAge: maximumAge ?? Duration.zero,
       ),
-    ).timeout(timeLimit);
+    ).timeout(timeLimit + const Duration(minutes: 2));
 
 /// Web: the browser asks for permission itself when a position is requested. The Permissions API
 /// is not trusted for this: Safari on iOS reports "prompt" or "denied" even when location is
@@ -71,20 +93,20 @@ Future<DeviceLocation> _currentWebLocation() async {
   Position pos;
   try {
     pos = await _webPosition(highAccuracy: true, timeLimit: const Duration(seconds: 15));
-  } on PermissionDeniedException {
-    throw LocationError.denied;
   } catch (_) {
-    // iOS can fail or stall on a precise fix (e.g. "Precise Location" off); a coarse or recent one will do.
+    // iOS can fail or stall on a precise fix, and can even refuse it as "permission denied" while
+    // location is allowed (e.g. "Precise Location" off). So any failure, a denial included, gets
+    // one more try for a coarse or recent fix; only its outcome counts.
     try {
       pos = await _webPosition(
         highAccuracy: false,
         timeLimit: const Duration(seconds: 15),
         maximumAge: const Duration(minutes: 5),
       );
-    } on PermissionDeniedException {
-      throw LocationError.denied;
-    } catch (_) {
-      throw LocationError.unavailable;
+    } on PermissionDeniedException catch (e) {
+      throw LocationException(LocationError.denied, e.message);
+    } catch (e) {
+      throw LocationException(LocationError.unavailable, e.toString());
     }
   }
   return (point: LatLng(pos.latitude, pos.longitude), radiusMeters: null);

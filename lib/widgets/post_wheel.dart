@@ -152,6 +152,9 @@ class _PostWheelButtonState extends State<PostWheelButton> with SingleTickerProv
     backHandler?.remove();
     _finger.value = null;
     _pointer = null;
+    // Acted on at once, still within the tap, not after the closing animation: browsers only open
+    // the camera from inside the user's gesture, and iOS Safari ignores it a moment later.
+    if (selected != null && mounted) widget.onSelected(selected);
 
     try {
       await _animation.reverse().orCancel;
@@ -162,7 +165,6 @@ class _PostWheelButtonState extends State<PostWheelButton> with SingleTickerProv
     _overlay = null;
     _closing = false;
     if (mounted) setState(() {});
-    if (selected != null && mounted) widget.onSelected(selected);
   }
 
   void _press(Offset position) {

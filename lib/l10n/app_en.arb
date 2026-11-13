@@ -99,6 +99,7 @@
   "locationRequired": "Location is required.",
   "locationServicesOff": "Location services are turned off.",
   "locationDenied": "Location permission was not granted.",
+  "locationDeniedBrowser": "Location is blocked for this site. Allow it in your browser's site settings (on iPhone also check Settings → Privacy & Security → Location Services → Safari Websites → While Using the App), then tap Retry.",
   "locationUnavailable": "Could not get your location.",
   "couldNotLoadVideo": "Could not load video",
 

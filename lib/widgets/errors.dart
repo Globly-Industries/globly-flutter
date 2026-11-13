@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 
 import '../api/api_client.dart';
@@ -8,10 +9,17 @@ import 'location.dart';
 String errorMessage(BuildContext context, Object error) {
   final l = AppLocalizations.of(context);
 
+  if (error is LocationException) {
+    final message = errorMessage(context, error.reason);
+    final detail = error.detail?.trim();
+    return detail == null || detail.isEmpty ? message : '$message\n($detail)';
+  }
+
   if (error is LocationError) {
     return switch (error) {
       LocationError.servicesOff => l.locationServicesOff,
-      LocationError.denied => l.locationDenied,
+      // In a browser the app cannot ask again; the user has to unblock the site themselves.
+      LocationError.denied => kIsWeb ? l.locationDeniedBrowser : l.locationDenied,
       LocationError.unavailable => l.locationUnavailable,
     };
   }

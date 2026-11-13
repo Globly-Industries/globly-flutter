@@ -290,6 +290,10 @@ class AppLocalizationsLv extends AppLocalizations {
       'Atļauja izmantot atrašanās vietu netika piešķirta.';
 
   @override
+  String get locationDeniedBrowser =>
+      'Atrašanās vieta šai vietnei ir bloķēta. Atļauj to pārlūka vietnes iestatījumos (iPhone ierīcē pārbaudi arī Iestatījumi → Konfidencialitāte un drošība → Atrašanās vietas pakalpojumi → Safari vietnes → Lietotnes lietošanas laikā), tad spied “Mēģināt vēlreiz”.';
+
+  @override
   String get locationUnavailable => 'Neizdevās noteikt atrašanās vietu.';
 
   @override

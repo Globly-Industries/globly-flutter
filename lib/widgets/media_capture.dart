@@ -66,16 +66,27 @@ Future<CapturedMedia?> captureMedia(BuildContext context, MediaType type) async 
     ..hideCurrentSnackBar()
     ..showSnackBar(SnackBar(content: Text(message)));
 
-  final String captureId;
-  try {
-    captureId = await api.startCapture(type);
-  } catch (e) {
-    if (context.mounted) fail(errorMessage(context, e));
+  Object? ticketError;
+  final ticket = api.startCapture(type).then<String?>((id) => id, onError: (Object e) {
+    ticketError = e;
     return null;
-  }
+  });
 
-  final prefs = await SharedPreferences.getInstance();
-  await prefs.setString(_pendingTicketKey, '${type.name}:$captureId');
+  String? captureId;
+  SharedPreferences? prefs;
+  if (!kIsWeb) {
+    // The ticket first, saved, so that a capture cut short by Android can be recovered with it.
+    captureId = await ticket;
+    if (captureId == null) {
+      if (context.mounted) fail(errorMessage(context, ticketError!));
+      return null;
+    }
+    prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_pendingTicketKey, '${type.name}:$captureId');
+  }
+  // Web: browsers only open the camera from within the user's tap, and iOS Safari silently ignores
+  // the request once anything has been awaited (such as the ticket). So the picker opens right
+  // away and the ticket is asked for at the same moment, still before anything can be captured.
   try {
     if (!context.mounted) return null;
     final picker = ImagePicker();
@@ -87,12 +98,17 @@ Future<CapturedMedia?> captureMedia(BuildContext context, MediaType type) async 
     };
     final file = await capture;
     if (file == null) return null;
+    captureId ??= await ticket;
+    if (captureId == null) {
+      if (context.mounted) fail(errorMessage(context, ticketError!));
+      return null;
+    }
     return await _seal(api, type, file, captureId);
   } catch (_) {
     fail(failed);
     return null;
   } finally {
-    await prefs.remove(_pendingTicketKey);
+    await prefs?.remove(_pendingTicketKey);
   }
 }
 

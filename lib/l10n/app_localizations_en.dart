@@ -287,6 +287,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get locationDenied => 'Location permission was not granted.';
 
   @override
+  String get locationDeniedBrowser =>
+      'Location is blocked for this site. Allow it in your browser\'s site settings (on iPhone also check Settings → Privacy & Security → Location Services → Safari Websites → While Using the App), then tap Retry.';
+
+  @override
   String get locationUnavailable => 'Could not get your location.';
 
   @override

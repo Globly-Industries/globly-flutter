@@ -620,6 +620,12 @@ abstract class AppLocalizations {
   /// **'Location permission was not granted.'**
   String get locationDenied;
 
+  /// No description provided for @locationDeniedBrowser.
+  ///
+  /// In en, this message translates to:
+  /// **'Location is blocked for this site. Allow it in your browser\'s site settings (on iPhone also check Settings → Privacy & Security → Location Services → Safari Websites → While Using the App), then tap Retry.'**
+  String get locationDeniedBrowser;
+
   /// No description provided for @locationUnavailable.
   ///
   /// In en, this message translates to:
