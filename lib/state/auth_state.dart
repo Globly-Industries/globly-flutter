@@ -30,11 +30,23 @@ class AuthState extends ChangeNotifier {
   bool get isAdmin => _user?.isAdmin ?? false;
 
   Future<void> restore() async {
-    final token = await _storage.read(key: _tokenKey);
-    final userJson = await _storage.read(key: _userKey);
-    if (token != null && userJson != null) {
+    String? token, userJson, guest;
+    try {
+      token = await _storage.read(key: _tokenKey);
+      userJson = await _storage.read(key: _userKey);
+      guest = await _storage.read(key: _guestKey);
+      if (token != null && userJson != null) _user = User.fromJson(jsonDecode(userJson));
+    } catch (_) {
+      // Unreadable (e.g. restored from a backup without its Keystore key): start fresh, or we'd hang on loading.
+      token = null;
+      guest = null;
+      _user = null;
+      try {
+        await _storage.deleteAll();
+      } catch (_) {}
+    }
+    if (token != null && _user != null) {
       api.token = token;
-      _user = User.fromJson(jsonDecode(userJson));
       _status = AuthStatus.signedIn;
       notifyListeners();
       // Refresh roles/validity in the background; a 401 triggers signOut via onUnauthorized.
@@ -45,7 +57,7 @@ class AuthState extends ChangeNotifier {
       } catch (_) {/* offline: keep cached user */}
       return;
     }
-    _status = await _storage.read(key: _guestKey) == '1' ? AuthStatus.guest : AuthStatus.signedOut;
+    _status = guest == '1' ? AuthStatus.guest : AuthStatus.signedOut;
     notifyListeners();
   }
 
