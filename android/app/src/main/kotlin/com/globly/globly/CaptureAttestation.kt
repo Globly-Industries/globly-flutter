@@ -24,7 +24,8 @@ object CaptureAttestation {
             try {
                 withRetry { generate(challenge, rsa = true) }
             } catch (rsa: Exception) {
-                throw IllegalStateException("EC: ${describe(ec)} | RSA: ${describe(rsa)}$device", rsa)
+                // Device first: the app truncates this to 1000 chars for the server log.
+                throw IllegalStateException("$device EC: ${describe(ec)} | RSA: ${describe(rsa)}", rsa)
             }
         }
     }
@@ -68,12 +69,16 @@ object CaptureAttestation {
     private fun isTransient(e: Throwable) = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
         causes(e).any { it is KeyStoreException && it.isTransientFailure }
 
-    private val device get() = " (Android ${Build.VERSION.SDK_INT}, ${Build.MANUFACTURER} ${Build.MODEL})"
+    private val device get() = "(Android ${Build.VERSION.SDK_INT}, ${Build.MANUFACTURER} ${Build.MODEL})"
+
+    // Keystore2 dumps every key parameter into its message; that alone used up the whole log line.
+    private val keyParams = Regex("""\s*(and params: )?\[KeyParameter \{.*?} ]""")
 
     /** The whole cause chain on one line, since the top message is just "Failed to generate key pair". */
     private fun describe(e: Throwable) = causes(e).joinToString(" <- ") {
         val code = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && it is KeyStoreException)
             " [code ${it.numericErrorCode}]" else ""
-        "${it.javaClass.simpleName}: ${it.message?.replace(Regex("\\s+"), " ")}$code"
-    }
+        val message = it.message?.replace(Regex("\\s+"), " ")?.replace(keyParams, "")
+        "${it.javaClass.simpleName}: $message$code"
+    }.take(400)
 }
