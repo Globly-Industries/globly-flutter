@@ -119,7 +119,7 @@ class _HomeShellState extends State<HomeShell> {
                   child: NavigationRail(
                     selectedIndex: _index,
                     onDestinationSelected: (i) => setState(() => _index = i),
-                    labelType: NavigationRailLabelType.all,
+                    labelType: NavigationRailLabelType.none,
                     leading: Padding(
                       padding: const EdgeInsets.only(top: 8, bottom: 16),
                       child: Column(children: [

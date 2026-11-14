@@ -18,7 +18,7 @@ import '../widgets/location.dart';
 import '../widgets/mapbox_posts_map.dart';
 import '../widgets/post_card.dart';
 import 'notifications_screen.dart';
-import 'post_detail_screen.dart';
+import 'post_viewer_screen.dart';
 import 'profile_screen.dart';
 
 /// Content visualisation module: world map with server-clustered post points.
@@ -378,7 +378,7 @@ class _PostPreviewState extends State<_PostPreview> {
                 onPressed: () async {
                   final nav = Navigator.of(context);
                   final changed = await nav.push<bool>(
-                    MaterialPageRoute(builder: (_) => PostDetailScreen(postId: post.id, initial: post)),
+                    MaterialPageRoute(builder: (_) => PostViewerScreen(postId: post.id, initial: post)),
                   );
                   if (mounted) nav.pop(changed);
                 },

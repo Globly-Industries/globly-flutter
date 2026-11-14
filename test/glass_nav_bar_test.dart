@@ -51,8 +51,8 @@ void main() {
   testWidgets('tabs report their index', (tester) async {
     final result = await pumpBar(tester);
 
-    await tester.tap(find.text('Feed'));
-    await tester.tap(find.text('Map'));
+    await tester.tap(find.byIcon(Icons.dynamic_feed_outlined));
+    await tester.tap(find.byIcon(Icons.map_rounded));
     expect(result.tabs, [1, 0]);
   });
 

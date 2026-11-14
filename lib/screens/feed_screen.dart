@@ -155,7 +155,14 @@ class FeedScreenState extends State<FeedScreen> {
   Widget build(BuildContext context) {
     final immersive = context.select<SettingsState, bool>((s) => s.immersiveFeed);
     final filterActive = context.watch<FilterState>().filter.isActive;
-    return immersive ? _buildImmersive(filterActive) : _buildList(filterActive);
+    return GestureDetector(
+      // Swipe left for Nearby, right for Newest, matching the tabs' order.
+      onHorizontalDragEnd: (d) {
+        final v = d.primaryVelocity ?? 0;
+        if (v.abs() >= 300) _setMode(v < 0 ? FeedMode.nearby : FeedMode.newest);
+      },
+      child: immersive ? _buildImmersive(filterActive) : _buildList(filterActive),
+    );
   }
 
   Widget _buildImmersive(bool filterActive) {

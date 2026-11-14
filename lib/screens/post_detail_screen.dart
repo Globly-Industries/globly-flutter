@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -318,84 +320,101 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
 
+    final muted = theme.textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant);
+    final location = post.locationRadiusMeters != null
+        ? l.approximateLocation(formatRadius(post.locationRadiusMeters!))
+        : '${post.latitude.toStringAsFixed(4)}, ${post.longitude.toStringAsFixed(4)}';
+    final hasMedia = post.media != null && post.mediaType != MediaType.text;
+
     return ListView(
       padding: EdgeInsets.only(top: insets.top + 8, bottom: insets.bottom + 32),
       children: [
         ContentWidth(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              if (post.isHidden) ...[HiddenBanner(post), const SizedBox(height: 16)],
+          child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            if (post.isHidden)
+              Padding(padding: const EdgeInsets.fromLTRB(16, 0, 16, 12), child: HiddenBanner(post)),
 
-              // Author
-              Row(children: [
-                UserAvatar(post.author.userName, radius: 22),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text(post.author.userName, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
-                    Text(timeAgo(context, post.createdAt),
-                        style: theme.textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant)),
-                  ]),
+            // Media first, nearly edge to edge.
+            if (hasMedia)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(24),
+                  // The player bar keeps its own height; pictures and video are capped and letterboxed.
+                  child: post.mediaType == MediaType.audio
+                      ? MediaView(post: post)
+                      : ColoredBox(
+                          color: scheme.surfaceContainerHighest,
+                          child: ConstrainedBox(
+                            constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.6),
+                            child: Center(heightFactor: 1, child: MediaView(post: post)),
+                          ),
+                        ),
                 ),
-                MediaPill(post.mediaType),
-              ]),
-              const SizedBox(height: 16),
-              Text(post.title, style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800)),
-              if (post.description?.isNotEmpty ?? false) ...[
-                const SizedBox(height: 8),
-                Text(post.description!, style: theme.textTheme.bodyLarge?.copyWith(height: 1.45)),
-              ],
-              const SizedBox(height: 16),
-              if (post.media != null) ...[
-                ClipRRect(borderRadius: BorderRadius.circular(18), child: MediaView(post: post)),
-                const SizedBox(height: 12),
-              ],
+              ),
 
-              // Location & views
-              Wrap(spacing: 8, runSpacing: 8, children: [
-                Pill(
-                  icon: Icons.place_rounded,
-                  label: post.locationRadiusMeters != null
-                      ? l.approximateLocation(formatRadius(post.locationRadiusMeters!))
-                      : '${post.latitude.toStringAsFixed(4)}, ${post.longitude.toStringAsFixed(4)}',
-                  color: scheme.primary,
-                ),
-                Pill(icon: Icons.visibility_rounded, label: l.viewsCount(post.views), color: scheme.secondary),
-              ]),
-              const SizedBox(height: 16),
-
-              // Votes
-              Row(children: [
-                Container(
-                  decoration: BoxDecoration(
-                    color: glassTint(context),
-                    border: Border.all(color: glassEdge(context)),
-                    borderRadius: BorderRadius.circular(28),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                // Author, time and place.
+                Row(children: [
+                  UserAvatar(post.author.userName, radius: 20),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Text(post.author.userName, style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
+                      const SizedBox(height: 2),
+                      Row(children: [
+                        Text(timeAgo(context, post.createdAt), style: muted),
+                        Text('  ·  ', style: muted),
+                        Icon(Icons.place_rounded, size: 13, color: scheme.onSurfaceVariant),
+                        const SizedBox(width: 2),
+                        Flexible(child: Text(location, style: muted, maxLines: 1, overflow: TextOverflow.ellipsis)),
+                      ]),
+                    ]),
                   ),
-                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                  const SizedBox(width: 8),
+                  MediaPill(post.mediaType),
+                ]),
+                const SizedBox(height: 18),
+
+                Text(
+                  post.title,
+                  style: (hasMedia ? theme.textTheme.titleLarge : theme.textTheme.headlineSmall)
+                      ?.copyWith(fontWeight: FontWeight.w800, height: 1.25),
+                ),
+                if (post.description?.isNotEmpty ?? false) ...[
+                  const SizedBox(height: 8),
+                  Text(post.description!, style: theme.textTheme.bodyLarge?.copyWith(height: 1.5)),
+                ],
+                const SizedBox(height: 20),
+
+                // Votes, comments and views in one bar.
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  decoration: BoxDecoration(color: glassTint(context), borderRadius: BorderRadius.circular(28)),
+                  child: Row(children: [
                     IconButton(
-                      color: post.myVote == 1 ? scheme.primary : null,
+                      color: post.myVote == 1 ? scheme.primary : scheme.onSurfaceVariant,
                       icon: Icon(post.myVote == 1 ? Icons.thumb_up_rounded : Icons.thumb_up_outlined),
                       onPressed: () => _vote(1),
                     ),
                     Text('${post.score}', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800)),
                     IconButton(
-                      color: post.myVote == -1 ? scheme.error : null,
+                      color: post.myVote == -1 ? scheme.error : scheme.onSurfaceVariant,
                       icon: Icon(post.myVote == -1 ? Icons.thumb_down_rounded : Icons.thumb_down_outlined),
                       onPressed: () => _vote(-1),
                     ),
+                    const Spacer(),
+                    _BarStat(icon: Icons.chat_bubble_outline_rounded, text: '${math.max(post.commentCount, _comments.length)}'),
+                    _BarStat(icon: Icons.visibility_outlined, text: '${post.views}'),
                   ]),
                 ),
-                const SizedBox(width: 12),
-                Text('${post.upvotes} ↑  ${post.downvotes} ↓',
-                    style: theme.textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant)),
-              ]),
-              const Divider(height: 40),
+                const SizedBox(height: 28),
 
-              // Comments
-              Text(l.comments, style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
-              const SizedBox(height: 12),
+                // Comments
+                Text(l.comments, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800)),
+                const SizedBox(height: 12),
               if (auth.isSignedIn)
                 Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Padding(
@@ -433,8 +452,9 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                   padding: const EdgeInsets.symmetric(vertical: 24),
                   child: Center(child: Text(l.noComments, style: TextStyle(color: scheme.onSurfaceVariant))),
                 ),
-            ]),
-          ),
+              ]),
+            ),
+          ]),
         ),
       ],
     );
@@ -483,6 +503,25 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
             icon: Icon(Icons.delete_outline_rounded, color: scheme.onSurfaceVariant),
             onPressed: () => _deleteComment(c),
           ),
+      ]),
+    );
+  }
+}
+
+class _BarStat extends StatelessWidget {
+  final IconData icon;
+  final String text;
+  const _BarStat({required this.icon, required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    final color = Theme.of(context).colorScheme.onSurfaceVariant;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        Icon(icon, size: 20, color: color),
+        const SizedBox(width: 5),
+        Text(text, style: TextStyle(color: color, fontWeight: FontWeight.w600)),
       ]),
     );
   }

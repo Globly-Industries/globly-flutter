@@ -382,26 +382,12 @@ class _NavButton extends StatelessWidget {
       selected: selected,
       excludeSemantics: true,
       label: item.label,
-      child: InkResponse(
-        onTap: onTap,
-        radius: 34,
-        child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(selected ? item.selectedIcon : item.icon, color: color, size: 25),
-              const SizedBox(height: 3),
-              AnimatedDefaultTextStyle(
-                duration: const Duration(milliseconds: 220),
-                style: TextStyle(
-                  color: color,
-                  fontSize: 11.5,
-                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                ),
-                child: Text(item.label, maxLines: 1, overflow: TextOverflow.ellipsis),
-              ),
-            ],
-          ),
+      child: Tooltip(
+        message: item.label,
+        child: InkResponse(
+          onTap: onTap,
+          radius: 30,
+          child: Center(child: Icon(selected ? item.selectedIcon : item.icon, color: color, size: 28)),
         ),
       ),
     );

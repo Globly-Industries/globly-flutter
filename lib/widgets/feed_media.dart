@@ -11,7 +11,6 @@ import '../models/models.dart';
 import '../theme.dart';
 import 'common.dart';
 import 'goo.dart';
-import 'static_map.dart';
 
 /// Full-screen content of one post in the immersive feed.
 ///
@@ -51,14 +50,7 @@ class FeedMedia extends StatelessWidget {
         muted: muted,
         barBottom: barBottom,
       ),
-      MediaType.audio when media != null => FeedAudio(
-        post: post,
-        url: media.url,
-        active: active,
-        playing: playing,
-        muted: muted,
-        safe: safe,
-      ),
+      MediaType.audio when media != null => FeedAudio(url: media.url, active: active, playing: playing, muted: muted),
       _ => FeedText(post: post, safe: safe),
     };
   }
@@ -219,25 +211,14 @@ class _FeedVideoState extends State<FeedVideo> {
   }
 }
 
-/// A sound recording as "the sound of this place": the map around where it was recorded, with a
-/// drop of liquid in the middle that comes alive while it plays.
+/// A sound recording: a drop of liquid in the middle of the page that comes alive while it plays.
 class FeedAudio extends StatefulWidget {
-  final Post post;
   final String url;
   final bool active;
   final bool playing;
   final ValueListenable<bool> muted;
-  final EdgeInsets safe;
 
-  const FeedAudio({
-    super.key,
-    required this.post,
-    required this.url,
-    required this.active,
-    required this.playing,
-    required this.muted,
-    required this.safe,
-  });
+  const FeedAudio({super.key, required this.url, required this.active, required this.playing, required this.muted});
 
   @override
   State<FeedAudio> createState() => _FeedAudioState();
@@ -320,57 +301,54 @@ class _FeedAudioState extends State<FeedAudio> {
     return Stack(
       fit: StackFit.expand,
       children: [
-        StaticPostMap(post: widget.post, width: 400, height: 720, marker: false),
         DecoratedBox(
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: [color.withValues(alpha: 0.35), Colors.black.withValues(alpha: 0.55)],
+              colors: [Color.lerp(color, Colors.black, 0.45)!, Colors.black],
             ),
           ),
         ),
-        Padding(
-          padding: widget.safe,
-          child: Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                GooBlob(
-                  size: 150,
-                  lively: widget.playing,
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [Color.lerp(color, Colors.white, 0.25)!, color],
-                  ),
-                  shadowColor: color.withValues(alpha: 0.6),
-                  child: Icon(
-                    widget.playing ? Icons.graphic_eq_rounded : Icons.play_arrow_rounded,
-                    size: 64,
+        // Centred on the whole page, not the area left by the overlays.
+        Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              GooBlob(
+                size: 150,
+                lively: widget.playing,
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Color.lerp(color, Colors.white, 0.25)!, color],
+                ),
+                shadowColor: color.withValues(alpha: 0.6),
+                child: Icon(
+                  widget.playing ? Icons.graphic_eq_rounded : Icons.play_arrow_rounded,
+                  size: 64,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 28),
+              SizedBox(
+                width: 200,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(2),
+                  child: LinearProgressIndicator(
+                    value: progress,
+                    minHeight: 3,
                     color: Colors.white,
+                    backgroundColor: Colors.white.withValues(alpha: 0.2),
                   ),
                 ),
-                const SizedBox(height: 28),
-                SizedBox(
-                  width: 200,
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(2),
-                    child: LinearProgressIndicator(
-                      value: progress,
-                      minHeight: 3,
-                      color: Colors.white,
-                      backgroundColor: Colors.white.withValues(alpha: 0.2),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  '${_fmt(_position)} / ${_fmt(_duration)}',
-                  style: const TextStyle(color: Colors.white70, fontFeatures: [ui.FontFeature.tabularFigures()]),
-                ),
-              ],
-            ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '${_fmt(_position)} / ${_fmt(_duration)}',
+                style: const TextStyle(color: Colors.white70, fontFeatures: [ui.FontFeature.tabularFigures()]),
+              ),
+            ],
           ),
         ),
       ],

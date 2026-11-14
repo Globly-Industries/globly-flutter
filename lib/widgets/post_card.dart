@@ -23,6 +23,8 @@ class PostCard extends StatelessWidget {
 
     return Card(
       clipBehavior: Clip.antiAlias,
+      // No hairline border: too busy in a list.
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       child: InkWell(
         onTap: onTap,
         child: Padding(
