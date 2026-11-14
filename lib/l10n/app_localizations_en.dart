@@ -699,4 +699,31 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get avatarNoPosts => 'You have no photo or video posts yet.';
+
+  @override
+  String likedByOne(String name) {
+    return 'Liked by $name';
+  }
+
+  @override
+  String likedByTwo(String first, String second) {
+    return 'Liked by $first and $second';
+  }
+
+  @override
+  String likedByMany(String name, int others) {
+    String _temp0 = intl.Intl.pluralLogic(
+      others,
+      locale: localeName,
+      other: 'Liked by $name and $others others',
+      one: 'Liked by $name and 1 other',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get shareLikes => 'Show my likes to followers';
+
+  @override
+  String get shareLikesHint => 'Posts you like can show up in their feeds.';
 }

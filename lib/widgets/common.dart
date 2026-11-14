@@ -32,6 +32,16 @@ String mediaLabel(BuildContext context, MediaType type) => switch (type) {
       MediaType.audio => context.l10n.mediaAudio,
     };
 
+/// "Liked by Anna", "Liked by Anna and Ben", "Liked by Anna and 3 others".
+String likedByLabel(BuildContext context, LikedBy likedBy) {
+  final l = context.l10n;
+  final names = likedBy.userNames;
+  if (names.isEmpty) return '';
+  if (likedBy.count == 1 || names.length == 1) return l.likedByOne(names.first);
+  if (likedBy.count == 2) return l.likedByTwo(names[0], names[1]);
+  return l.likedByMany(names.first, likedBy.count - 1);
+}
+
 String timeAgo(BuildContext context, DateTime time) {
   final l = context.l10n;
   final d = DateTime.now().difference(time.toLocal());

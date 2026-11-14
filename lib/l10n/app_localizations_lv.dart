@@ -703,4 +703,26 @@ class AppLocalizationsLv extends AppLocalizations {
 
   @override
   String get avatarNoPosts => 'Jums vēl nav foto vai video ierakstu.';
+
+  @override
+  String likedByOne(String name) {
+    return 'Patīk $name';
+  }
+
+  @override
+  String likedByTwo(String first, String second) {
+    return 'Patīk $first un $second';
+  }
+
+  @override
+  String likedByMany(String name, int others) {
+    return 'Patīk $name un vēl $others';
+  }
+
+  @override
+  String get shareLikes => 'Rādīt sekotājiem, kas man patīk';
+
+  @override
+  String get shareLikesHint =>
+      'Jums tīkami ieraksti var parādīties viņu plūsmās.';
 }

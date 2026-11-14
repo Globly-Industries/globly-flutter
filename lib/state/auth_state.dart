@@ -98,6 +98,22 @@ class AuthState extends ChangeNotifier {
     await _storage.write(key: _userKey, value: jsonEncode(_user!.toJson()));
   }
 
+  /// Switches right away; goes back if the server refuses.
+  Future<void> setShareLikes(bool share) async {
+    final user = _user;
+    if (user == null) return;
+    _user = user.withShareLikes(share);
+    notifyListeners();
+    try {
+      await api.setShareLikes(share);
+    } catch (_) {
+      _user = user;
+      notifyListeners();
+      rethrow;
+    }
+    await _storage.write(key: _userKey, value: jsonEncode(_user!.toJson()));
+  }
+
   Future<void> _applySession((String, User) session) async {
     final (token, user) = session;
     api.token = token;

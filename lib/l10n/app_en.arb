@@ -249,5 +249,14 @@
   "avatarRemove": "Remove profile picture",
   "avatarUpdated": "Profile picture updated.",
   "avatarRemoved": "Profile picture removed.",
-  "avatarNoPosts": "You have no photo or video posts yet."
+  "avatarNoPosts": "You have no photo or video posts yet.",
+
+  "likedByOne": "Liked by {name}",
+  "@likedByOne": { "placeholders": { "name": { "type": "String" } } },
+  "likedByTwo": "Liked by {first} and {second}",
+  "@likedByTwo": { "placeholders": { "first": { "type": "String" }, "second": { "type": "String" } } },
+  "likedByMany": "{others, plural, =1{Liked by {name} and 1 other} other{Liked by {name} and {others} others}}",
+  "@likedByMany": { "placeholders": { "name": { "type": "String" }, "others": { "type": "int" } } },
+  "shareLikes": "Show my likes to followers",
+  "shareLikesHint": "Posts you like can show up in their feeds."
 }

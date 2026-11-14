@@ -1339,6 +1339,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'You have no photo or video posts yet.'**
   String get avatarNoPosts;
+
+  /// No description provided for @likedByOne.
+  ///
+  /// In en, this message translates to:
+  /// **'Liked by {name}'**
+  String likedByOne(String name);
+
+  /// No description provided for @likedByTwo.
+  ///
+  /// In en, this message translates to:
+  /// **'Liked by {first} and {second}'**
+  String likedByTwo(String first, String second);
+
+  /// No description provided for @likedByMany.
+  ///
+  /// In en, this message translates to:
+  /// **'{others, plural, =1{Liked by {name} and 1 other} other{Liked by {name} and {others} others}}'**
+  String likedByMany(String name, int others);
+
+  /// No description provided for @shareLikes.
+  ///
+  /// In en, this message translates to:
+  /// **'Show my likes to followers'**
+  String get shareLikes;
+
+  /// No description provided for @shareLikesHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Posts you like can show up in their feeds.'**
+  String get shareLikesHint;
 }
 
 class _AppLocalizationsDelegate

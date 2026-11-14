@@ -233,6 +233,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
             onChanged: (code) => settings.setLocale(code == null ? null : Locale(code)),
           ),
         ),
+        if (auth.user case final user?)
+          SwitchListTile(
+            secondary: const Icon(Icons.favorite_border_rounded),
+            title: Text(l.shareLikes),
+            subtitle: Text(l.shareLikesHint),
+            value: user.shareLikes,
+            onChanged: (share) async {
+              try {
+                await auth.setShareLikes(share);
+              } catch (e) {
+                if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(errorMessage(context, e))));
+              }
+            },
+          ),
         if (AppUpdater.supported)
           ListTile(
             leading: const Icon(Icons.system_update_rounded),

@@ -610,12 +610,14 @@ class _Details extends StatelessWidget {
                 ),
               ],
             ),
-            if (distance != null || post.isHidden || post.isSpotlit) ...[
+            if (distance != null || post.isHidden || post.isSpotlit || post.likedBy != null) ...[
               const SizedBox(height: 8),
               Wrap(
                 spacing: 6,
                 runSpacing: 6,
                 children: [
+                  if (post.likedBy case final likedBy?)
+                    _Chip(icon: Icons.favorite_rounded, label: likedByLabel(context, likedBy)),
                   if (distance != null) _Chip(icon: Icons.place_rounded, label: distance, onTap: onShowOnMap),
                   if (post.isHidden) _Chip(icon: Icons.visibility_off_rounded, label: context.l10n.hidden),
                   if (post.isSpotlit) _Chip(icon: Icons.auto_awesome_rounded, label: context.l10n.spotlight),

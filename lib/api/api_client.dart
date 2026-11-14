@@ -132,6 +132,9 @@ class ApiClient {
 
   Future<void> removeAvatar() => _call(() => _dio.delete('/api/users/me/avatar'));
 
+  Future<void> setShareLikes(bool share) =>
+      _call(() => _dio.put('/api/users/me/share-likes', data: {'shareLikes': share}));
+
   /// Who follows [userId] ([followers]), or whom [userId] follows.
   Future<Paged<FollowUser>> followList(String userId, {required bool followers, int page = 1}) async => Paged.fromJson(
       await _call(() => _dio.get('/api/users/$userId/${followers ? 'followers' : 'following'}',

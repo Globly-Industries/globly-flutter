@@ -225,5 +225,11 @@
   "avatarRemove": "Noņemt profila attēlu",
   "avatarUpdated": "Profila attēls atjaunināts.",
   "avatarRemoved": "Profila attēls noņemts.",
-  "avatarNoPosts": "Jums vēl nav foto vai video ierakstu."
+  "avatarNoPosts": "Jums vēl nav foto vai video ierakstu.",
+
+  "likedByOne": "Patīk {name}",
+  "likedByTwo": "Patīk {first} un {second}",
+  "likedByMany": "Patīk {name} un vēl {others}",
+  "shareLikes": "Rādīt sekotājiem, kas man patīk",
+  "shareLikesHint": "Jums tīkami ieraksti var parādīties viņu plūsmās."
 }

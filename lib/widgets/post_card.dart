@@ -35,6 +35,20 @@ class PostCard extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(14),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            if (post.likedBy case final likedBy?) ...[
+              Row(children: [
+                Icon(Icons.favorite_rounded, size: 14, color: scheme.onSurfaceVariant),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    likedByLabel(context, likedBy),
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.labelMedium?.copyWith(color: scheme.onSurfaceVariant),
+                  ),
+                ),
+              ]),
+              const SizedBox(height: 10),
+            ],
             // Author row
             Row(children: [
               Expanded(

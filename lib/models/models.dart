@@ -32,14 +32,38 @@ class User {
   final bool isAdmin;
   final String? avatarUrl;
 
-  const User({required this.id, required this.userName, required this.isAdmin, this.avatarUrl});
+  /// Whether followers see this user's likes in their feeds.
+  final bool shareLikes;
 
-  factory User.fromJson(Map<String, dynamic> j) =>
-      User(id: j['id'], userName: j['userName'], isAdmin: j['isAdmin'] ?? false, avatarUrl: j['avatarUrl']);
+  const User({required this.id, required this.userName, required this.isAdmin, this.avatarUrl, this.shareLikes = true});
 
-  Map<String, dynamic> toJson() => {'id': id, 'userName': userName, 'isAdmin': isAdmin, 'avatarUrl': avatarUrl};
+  factory User.fromJson(Map<String, dynamic> j) => User(
+        id: j['id'],
+        userName: j['userName'],
+        isAdmin: j['isAdmin'] ?? false,
+        avatarUrl: j['avatarUrl'],
+        shareLikes: j['shareLikes'] ?? true,
+      );
 
-  User withAvatar(String? url) => User(id: id, userName: userName, isAdmin: isAdmin, avatarUrl: url);
+  Map<String, dynamic> toJson() =>
+      {'id': id, 'userName': userName, 'isAdmin': isAdmin, 'avatarUrl': avatarUrl, 'shareLikes': shareLikes};
+
+  User withAvatar(String? url) =>
+      User(id: id, userName: userName, isAdmin: isAdmin, avatarUrl: url, shareLikes: shareLikes);
+
+  User withShareLikes(bool share) =>
+      User(id: id, userName: userName, isAdmin: isAdmin, avatarUrl: avatarUrl, shareLikes: share);
+}
+
+/// People you follow who liked a post: the latest few names and how many in all.
+class LikedBy {
+  final List<String> userNames;
+  final int count;
+
+  const LikedBy(this.userNames, this.count);
+
+  factory LikedBy.fromJson(Map<String, dynamic> j) =>
+      LikedBy((j['userNames'] as List).cast<String>(), j['count']);
 }
 
 class Author {
@@ -142,6 +166,9 @@ class Post {
   /// Whether the signed-in user gave it an award.
   final bool myAward;
 
+  /// Feeds only: people you follow who liked it.
+  final LikedBy? likedBy;
+
   const Post({
     required this.id,
     required this.author,
@@ -167,6 +194,7 @@ class Post {
     this.spotlightUntil,
     this.awardCount = 0,
     this.myAward = false,
+    this.likedBy,
   });
 
   int get score => upvotes - downvotes;
@@ -198,6 +226,7 @@ class Post {
         spotlightUntil: j['spotlightUntil'] == null ? null : DateTime.parse(j['spotlightUntil']),
         awardCount: j['awardCount'] ?? 0,
         myAward: j['myAward'] ?? false,
+        likedBy: j['likedBy'] == null ? null : LikedBy.fromJson(j['likedBy']),
       );
 
   Post copyWith({
@@ -237,6 +266,7 @@ class Post {
         spotlightUntil: spotlightUntil ?? this.spotlightUntil,
         awardCount: awardCount ?? this.awardCount,
         myAward: myAward ?? this.myAward,
+        likedBy: likedBy,
       );
 }
 
