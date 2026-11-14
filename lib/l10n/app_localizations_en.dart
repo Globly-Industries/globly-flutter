@@ -686,9 +686,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get avatarTakePhoto => 'Take a photo';
-
-  @override
   String get avatarFromPost => 'Choose from my posts';
 
   @override

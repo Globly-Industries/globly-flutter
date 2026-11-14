@@ -690,9 +690,6 @@ class AppLocalizationsLv extends AppLocalizations {
   }
 
   @override
-  String get avatarTakePhoto => 'Uzņemt foto';
-
-  @override
   String get avatarFromPost => 'Izvēlēties no maniem ierakstiem';
 
   @override

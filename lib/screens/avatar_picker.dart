@@ -1,6 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 import '../api/api_client.dart';
@@ -10,49 +9,38 @@ import '../widgets/common.dart';
 import '../widgets/errors.dart';
 import '../widgets/glass.dart';
 
-/// Lets the signed-in user take a new profile picture, pick one of their posts, or remove it.
+/// Lets the signed-in user pick one of their posts as profile picture, or remove it. Posts carry
+/// proof of capture, so profile pictures do too.
 Future<void> changeAvatar(BuildContext context) async {
   final l = context.l10n;
   final auth = context.read<AuthState>();
   final api = context.read<ApiClient>();
-  final choice = await showGlassSheet<String>(
-    context,
-    builder: (ctx) => SafeArea(
-      child: Column(mainAxisSize: MainAxisSize.min, children: [
-        const SizedBox(height: 8),
-        ListTile(
-          leading: const Icon(Icons.photo_camera_rounded),
-          title: Text(l.avatarTakePhoto),
-          onTap: () => Navigator.pop(ctx, 'camera'),
-        ),
-        ListTile(
-          leading: const Icon(Icons.photo_library_rounded),
-          title: Text(l.avatarFromPost),
-          onTap: () => Navigator.pop(ctx, 'post'),
-        ),
-        if (auth.user?.avatarUrl != null)
-          ListTile(
-            leading: Icon(Icons.delete_outline_rounded, color: Theme.of(ctx).colorScheme.error),
-            title: Text(l.avatarRemove, style: TextStyle(color: Theme.of(ctx).colorScheme.error)),
-            onTap: () => Navigator.pop(ctx, 'remove'),
+  // Without a picture to remove, picking a post is the only choice.
+  final choice = auth.user?.avatarUrl == null
+      ? 'post'
+      : await showGlassSheet<String>(
+          context,
+          builder: (ctx) => SafeArea(
+            child: Column(mainAxisSize: MainAxisSize.min, children: [
+              const SizedBox(height: 8),
+              ListTile(
+                leading: const Icon(Icons.photo_library_rounded),
+                title: Text(l.avatarFromPost),
+                onTap: () => Navigator.pop(ctx, 'post'),
+              ),
+              ListTile(
+                leading: Icon(Icons.delete_outline_rounded, color: Theme.of(ctx).colorScheme.error),
+                title: Text(l.avatarRemove, style: TextStyle(color: Theme.of(ctx).colorScheme.error)),
+                onTap: () => Navigator.pop(ctx, 'remove'),
+              ),
+              const SizedBox(height: 8),
+            ]),
           ),
-        const SizedBox(height: 8),
-      ]),
-    ),
-  );
+        );
   if (choice == null || !context.mounted) return;
 
   try {
     switch (choice) {
-      case 'camera':
-        final photo = await ImagePicker().pickImage(
-          source: ImageSource.camera,
-          preferredCameraDevice: CameraDevice.front,
-          imageQuality: 90,
-          maxWidth: 1600,
-        );
-        if (photo == null) return;
-        auth.updateAvatar(await api.setAvatarPhoto(photo));
       case 'post':
         final post = await Navigator.push<Post>(
           context,

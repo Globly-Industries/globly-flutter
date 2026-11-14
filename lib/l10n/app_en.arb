@@ -245,7 +245,6 @@
   "@awardDone": { "placeholders": { "user": { "type": "String" }, "balance": { "type": "int" } } },
   "@notificationAward": { "placeholders": { "user": { "type": "String" }, "post": { "type": "String" } } },
 
-  "avatarTakePhoto": "Take a photo",
   "avatarFromPost": "Choose from my posts",
   "avatarRemove": "Remove profile picture",
   "avatarUpdated": "Profile picture updated.",

@@ -1310,12 +1310,6 @@ abstract class AppLocalizations {
   /// **'{user} gave your post \"{post}\" an award'**
   String notificationAward(String user, String post);
 
-  /// No description provided for @avatarTakePhoto.
-  ///
-  /// In en, this message translates to:
-  /// **'Take a photo'**
-  String get avatarTakePhoto;
-
   /// No description provided for @avatarFromPost.
   ///
   /// In en, this message translates to:
