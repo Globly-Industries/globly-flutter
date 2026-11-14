@@ -195,5 +195,29 @@
   "noUserPosts": "Vēl nav ierakstu.",
   "noFollowers": "Vēl nav sekotāju.",
   "noFollowing": "Vēl nekam neseko.",
-  "notificationFollow": "{user} sāka jums sekot"
+  "notificationFollow": "{user} sāka jums sekot",
+
+  "points": "Punkti",
+  "spotlight": "Izcelt",
+  "spotlightTitle": "Izcelt šo ierakstu?",
+  "spotlightBody": "{hours} stundas jūsu ieraksts tiks izcelts sadaļās Jaunākie un Tuvumā un apzīmēts kā izcelts. Tas maksā {cost} no jūsu {balance} punktiem. Izcelšana palīdz ierakstu ieraudzīt, bet patīk vai nē, izlemj skatītāji.",
+  "spotlightTooPoor": "Izcelšana maksā {cost} punktus, jums ir {balance}. Punktu saņemat katru reizi, kad kādam patīk jūsu ieraksts.",
+  "spotlightDone": "Jūsu ieraksts ir izcelts. Atlikuši {balance} punkti.",
+  "spotlightAlreadyThis": "Šis ieraksts jau ir izcelts.",
+  "errSpotlightActive": "Jums jau ir izcelts ieraksts. Pagaidiet, līdz tas beidzas.",
+  "errNotEnoughPoints": "Jums nepietiek punktu.",
+  "errPostHidden": "Paslēptus ierakstus nevar izcelt.",
+  "ok": "Labi",
+
+  "award": "Apbalvot",
+  "awardTitle": "Apbalvot ierakstu?",
+  "awardBody": "{user} saņems {cost} no jūsu punktiem, un ieraksts tiks atzīmēts ar apbalvojumu. Jums ir {balance} punkti un šodien atlikuši {left} apbalvojumi.",
+  "awardTooPoor": "Apbalvojums maksā {cost} punktus, jums ir {balance}. Punktu saņemat katru reizi, kad kādam patīk jūsu ieraksts.",
+  "awardDone": "{user} apbalvots. Atlikuši {balance} punkti.",
+  "signInToAward": "Pieslēdzieties, lai apbalvotu ierakstus.",
+  "errCannotAwardOwn": "Savu ierakstu apbalvot nevar.",
+  "errAccountTooNew": "Jauni konti var apbalvot pēc dažām dienām.",
+  "errAlreadyAwarded": "Jūs jau apbalvojāt šo ierakstu.",
+  "errAwardLimit": "Šodienas apbalvojumi ir izlietoti.",
+  "notificationAward": "{user} apbalvoja jūsu ierakstu \"{post}\""
 }

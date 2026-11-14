@@ -125,6 +125,13 @@ class Post {
   /// Admins only: visible, but the NSFW filter queued it for review.
   final bool needsReview;
 
+  /// Set while the author has it in the spotlight (boosted in the feeds).
+  final DateTime? spotlightUntil;
+  final int awardCount;
+
+  /// Whether the signed-in user gave it an award.
+  final bool myAward;
+
   const Post({
     required this.id,
     required this.author,
@@ -147,9 +154,14 @@ class Post {
     required this.updatedAt,
     this.nsfwScore,
     this.needsReview = false,
+    this.spotlightUntil,
+    this.awardCount = 0,
+    this.myAward = false,
   });
 
   int get score => upvotes - downvotes;
+
+  bool get isSpotlit => spotlightUntil?.isAfter(DateTime.now()) ?? false;
 
   factory Post.fromJson(Map<String, dynamic> j) => Post(
         id: j['id'],
@@ -173,6 +185,9 @@ class Post {
         updatedAt: j['updatedAt'] == null ? null : DateTime.parse(j['updatedAt']),
         nsfwScore: (j['nsfwScore'] as num?)?.toDouble(),
         needsReview: j['needsReview'] ?? false,
+        spotlightUntil: j['spotlightUntil'] == null ? null : DateTime.parse(j['spotlightUntil']),
+        awardCount: j['awardCount'] ?? 0,
+        myAward: j['myAward'] ?? false,
       );
 
   Post copyWith({
@@ -183,6 +198,9 @@ class Post {
     int? commentCount,
     int? myVote,
     bool? isHidden,
+    DateTime? spotlightUntil,
+    int? awardCount,
+    bool? myAward,
   }) =>
       Post(
         id: id,
@@ -206,6 +224,33 @@ class Post {
         updatedAt: updatedAt,
         nsfwScore: nsfwScore,
         needsReview: needsReview,
+        spotlightUntil: spotlightUntil ?? this.spotlightUntil,
+        awardCount: awardCount ?? this.awardCount,
+        myAward: myAward ?? this.myAward,
+      );
+}
+
+/// The signed-in user's points and what a spotlight costs them now.
+class PointsInfo {
+  final int balance;
+  final int spotlightCost;
+  final int spotlightHours;
+  final String? spotlightPostId;
+  final DateTime? spotlightUntil;
+  final int awardCost;
+  final int awardsLeftToday;
+
+  const PointsInfo(this.balance, this.spotlightCost, this.spotlightHours, this.spotlightPostId, this.spotlightUntil,
+      [this.awardCost = 5, this.awardsLeftToday = 0]);
+
+  factory PointsInfo.fromJson(Map<String, dynamic> j) => PointsInfo(
+        j['balance'],
+        j['spotlightCost'],
+        j['spotlightHours'],
+        j['spotlightPostId'],
+        j['spotlightUntil'] == null ? null : DateTime.parse(j['spotlightUntil']),
+        j['awardCost'] ?? 5,
+        j['awardsLeftToday'] ?? 0,
       );
 }
 
@@ -260,7 +305,7 @@ class Comment {
       );
 }
 
-enum NotificationType { comment, mention, follow }
+enum NotificationType { comment, mention, follow, award }
 
 /// A comment or mention on a post, or a new follower ([postId] and the rest are then null).
 class AppNotification {
@@ -283,6 +328,7 @@ class AppNotification {
         switch (j['type']) {
           'Mention' => NotificationType.mention,
           'Follow' => NotificationType.follow,
+          'Award' => NotificationType.award,
           _ => NotificationType.comment,
         },
         Author.fromJson(j['actor']),

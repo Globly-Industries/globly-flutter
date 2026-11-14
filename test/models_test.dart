@@ -59,4 +59,16 @@ void main() {
     expect(n.postId, isNull);
     expect(n.markedRead().isRead, isTrue);
   });
+
+  test('PointsInfo parses an active spotlight', () {
+    final p = PointsInfo.fromJson({
+      'balance': 12,
+      'spotlightCost': 20,
+      'spotlightHours': 24,
+      'spotlightPostId': 'p1',
+      'spotlightUntil': '2030-01-01T00:00:00Z',
+    });
+    expect(p.balance, 12);
+    expect(p.spotlightUntil, DateTime.utc(2030));
+  });
 }

@@ -210,15 +210,31 @@ class ApiClient {
   Future<bool> report(String postId, String? reason) async =>
       (await _call(() => _dio.post('/api/posts/$postId/report', data: {'reason': reason})))['isHidden'] as bool;
 
+  // ---------- Points ----------
+
+  Future<PointsInfo> points() async => PointsInfo.fromJson(await _call(() => _dio.get('/api/points')));
+
+  /// Spends points to spotlight [postId]; returns the new balance and when the spotlight ends.
+  Future<({int balance, DateTime until})> spotlight(String postId) async {
+    final data = await _call(() => _dio.post('/api/posts/$postId/spotlight'));
+    return (balance: data['balance'] as int, until: DateTime.parse(data['until']));
+  }
+
+  /// Gives [postId]'s author an award from the user's points; returns the new balance and award count.
+  Future<({int balance, int awardCount})> award(String postId) async {
+    final data = await _call(() => _dio.post('/api/posts/$postId/award'));
+    return (balance: data['balance'] as int, awardCount: data['awardCount'] as int);
+  }
+
   // ---------- Notifications ----------
 
-  // follows: the server only sends follow notifications to apps that ask, since older ones can't show them.
+  // follows/awards: the server only sends those notifications to apps that ask, since older ones can't show them.
   Future<Paged<AppNotification>> notifications({int page = 1}) async => Paged.fromJson(
-      await _call(() => _dio.get('/api/notifications', queryParameters: {'page': page, 'follows': true})),
+      await _call(() => _dio.get('/api/notifications', queryParameters: {'page': page, 'follows': true, 'awards': true})),
       AppNotification.fromJson);
 
   Future<int> unreadNotificationCount() async =>
-      (await _call(() => _dio.get('/api/notifications/unread-count', queryParameters: {'follows': true})))['count']
+      (await _call(() => _dio.get('/api/notifications/unread-count', queryParameters: {'follows': true, 'awards': true})))['count']
           as int;
 
   Future<void> markNotificationRead(String id) => _call(() => _dio.post('/api/notifications/$id/read'));

@@ -10,6 +10,7 @@ import '../api/api_client.dart';
 import '../models/models.dart';
 import '../state/auth_state.dart';
 import '../theme.dart';
+import 'award.dart';
 import 'comments_sheet.dart';
 import 'common.dart';
 import 'errors.dart';
@@ -167,6 +168,11 @@ class _ImmersiveFeedState extends State<ImmersiveFeed> {
     }
   }
 
+  Future<void> _award(Post post) async {
+    final updated = await giveAward(context, post);
+    if (updated != null) widget.onPostChanged(updated);
+  }
+
   void _like(Post post) {
     if (post.myVote != 1) _vote(post, 1);
   }
@@ -239,6 +245,7 @@ class _ImmersiveFeedState extends State<ImmersiveFeed> {
                   onVote: (v) => _vote(post, v),
                   onLike: () => _like(post),
                   onComments: () => _comments(post),
+                  onAward: () => _award(post),
                   onOpen: () => widget.onOpen(post),
                   onShowOnMap: widget.onShowOnMap == null ? null : () => widget.onShowOnMap!(post),
                   onOpenAuthor: widget.onOpenAuthor == null ? null : () => widget.onOpenAuthor!(post.author),
@@ -351,6 +358,7 @@ class _FeedPage extends StatefulWidget {
   final ValueChanged<int> onVote;
   final VoidCallback onLike;
   final VoidCallback onComments;
+  final VoidCallback onAward;
   final VoidCallback onOpen;
   final VoidCallback? onShowOnMap;
   final VoidCallback? onOpenAuthor;
@@ -364,6 +372,7 @@ class _FeedPage extends StatefulWidget {
     required this.onVote,
     required this.onLike,
     required this.onComments,
+    required this.onAward,
     required this.onOpen,
     required this.onShowOnMap,
     this.onOpenAuthor,
@@ -499,6 +508,13 @@ class _FeedPageState extends State<_FeedPage> {
                 tooltip: l.comments,
                 onPressed: widget.onComments,
               ),
+              _RailButton(
+                icon: post.myAward ? Icons.emoji_events_rounded : Icons.emoji_events_outlined,
+                color: post.myAward ? awardColor : Colors.white,
+                label: post.awardCount > 0 ? '${post.awardCount}' : null,
+                tooltip: l.award,
+                onPressed: widget.onAward,
+              ),
               if (widget.onShowOnMap != null)
                 _RailButton(icon: Icons.map_outlined, tooltip: l.showOnMap, onPressed: widget.onShowOnMap!),
               if (_playable)
@@ -594,7 +610,7 @@ class _Details extends StatelessWidget {
                 ),
               ],
             ),
-            if (distance != null || post.isHidden) ...[
+            if (distance != null || post.isHidden || post.isSpotlit) ...[
               const SizedBox(height: 8),
               Wrap(
                 spacing: 6,
@@ -602,6 +618,7 @@ class _Details extends StatelessWidget {
                 children: [
                   if (distance != null) _Chip(icon: Icons.place_rounded, label: distance, onTap: onShowOnMap),
                   if (post.isHidden) _Chip(icon: Icons.visibility_off_rounded, label: context.l10n.hidden),
+                  if (post.isSpotlit) _Chip(icon: Icons.auto_awesome_rounded, label: context.l10n.spotlight),
                 ],
               ),
             ],

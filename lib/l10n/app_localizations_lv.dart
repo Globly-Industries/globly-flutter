@@ -607,4 +607,85 @@ class AppLocalizationsLv extends AppLocalizations {
   String notificationFollow(String user) {
     return '$user sāka jums sekot';
   }
+
+  @override
+  String get points => 'Punkti';
+
+  @override
+  String get spotlight => 'Izcelt';
+
+  @override
+  String get spotlightTitle => 'Izcelt šo ierakstu?';
+
+  @override
+  String spotlightBody(int hours, int cost, int balance) {
+    return '$hours stundas jūsu ieraksts tiks izcelts sadaļās Jaunākie un Tuvumā un apzīmēts kā izcelts. Tas maksā $cost no jūsu $balance punktiem. Izcelšana palīdz ierakstu ieraudzīt, bet patīk vai nē, izlemj skatītāji.';
+  }
+
+  @override
+  String spotlightTooPoor(int cost, int balance) {
+    return 'Izcelšana maksā $cost punktus, jums ir $balance. Punktu saņemat katru reizi, kad kādam patīk jūsu ieraksts.';
+  }
+
+  @override
+  String spotlightDone(int balance) {
+    return 'Jūsu ieraksts ir izcelts. Atlikuši $balance punkti.';
+  }
+
+  @override
+  String get spotlightAlreadyThis => 'Šis ieraksts jau ir izcelts.';
+
+  @override
+  String get errSpotlightActive =>
+      'Jums jau ir izcelts ieraksts. Pagaidiet, līdz tas beidzas.';
+
+  @override
+  String get errNotEnoughPoints => 'Jums nepietiek punktu.';
+
+  @override
+  String get errPostHidden => 'Paslēptus ierakstus nevar izcelt.';
+
+  @override
+  String get ok => 'Labi';
+
+  @override
+  String get award => 'Apbalvot';
+
+  @override
+  String get awardTitle => 'Apbalvot ierakstu?';
+
+  @override
+  String awardBody(int cost, String user, int balance, int left) {
+    return '$user saņems $cost no jūsu punktiem, un ieraksts tiks atzīmēts ar apbalvojumu. Jums ir $balance punkti un šodien atlikuši $left apbalvojumi.';
+  }
+
+  @override
+  String awardTooPoor(int cost, int balance) {
+    return 'Apbalvojums maksā $cost punktus, jums ir $balance. Punktu saņemat katru reizi, kad kādam patīk jūsu ieraksts.';
+  }
+
+  @override
+  String awardDone(String user, int balance) {
+    return '$user apbalvots. Atlikuši $balance punkti.';
+  }
+
+  @override
+  String get signInToAward => 'Pieslēdzieties, lai apbalvotu ierakstus.';
+
+  @override
+  String get errCannotAwardOwn => 'Savu ierakstu apbalvot nevar.';
+
+  @override
+  String get errAccountTooNew => 'Jauni konti var apbalvot pēc dažām dienām.';
+
+  @override
+  String get errAlreadyAwarded => 'Jūs jau apbalvojāt šo ierakstu.';
+
+  @override
+  String get errAwardLimit => 'Šodienas apbalvojumi ir izlietoti.';
+
+  @override
+  String notificationAward(String user, String post) {
+    return '$user apbalvoja jūsu ierakstu \"$post\"';
+  }
 }

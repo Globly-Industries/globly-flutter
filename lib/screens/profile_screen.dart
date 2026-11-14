@@ -48,6 +48,7 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   List<Post>? _posts;
   UserProfile? _profile;
+  int? _points;
   bool _hasMore = false;
   Object? _error;
   String? _loadedFor;
@@ -81,12 +82,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
       final profile = userId == null
           ? Future<UserProfile?>.value(null)
           : api.userProfile(userId).then<UserProfile?>((p) => p, onError: (_) => null);
+      final points = api.points().then<int?>((p) => p.balance, onError: (_) => null);
       final page = await api.myPosts();
       final counts = await profile;
+      final balance = await points;
       if (mounted) {
         setState(() {
           _posts = page.items;
           _profile = counts;
+          _points = balance;
           _hasMore = page.hasMore;
           _error = null;
         });
@@ -171,6 +175,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Wrap(spacing: 24, runSpacing: 8, children: [
                 ProfileStat(value: _posts == null ? '–' : '${posts.length}${_hasMore ? '+' : ''}', label: l.posts),
                 ProfileStat(value: _posts == null ? '–' : '$totalScore', label: l.score),
+                ProfileStat(value: '${_points ?? '–'}', label: l.points),
                 ProfileStat(
                   value: '${_profile?.followerCount ?? '–'}',
                   label: l.followers,

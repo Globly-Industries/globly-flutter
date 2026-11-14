@@ -602,4 +602,86 @@ class AppLocalizationsEn extends AppLocalizations {
   String notificationFollow(String user) {
     return '$user started following you';
   }
+
+  @override
+  String get points => 'Points';
+
+  @override
+  String get spotlight => 'Spotlight';
+
+  @override
+  String get spotlightTitle => 'Put this post in the spotlight?';
+
+  @override
+  String spotlightBody(int hours, int cost, int balance) {
+    return 'For $hours hours your post gets a boost in Recent and Nearby and a Spotlight label. It costs $cost of your $balance points. A spotlight gets your post seen, likes are still up to the post.';
+  }
+
+  @override
+  String spotlightTooPoor(int cost, int balance) {
+    return 'A spotlight costs $cost points and you have $balance. You earn a point each time someone likes one of your posts.';
+  }
+
+  @override
+  String spotlightDone(int balance) {
+    return 'Your post is in the spotlight. $balance points left.';
+  }
+
+  @override
+  String get spotlightAlreadyThis => 'This post is already in the spotlight.';
+
+  @override
+  String get errSpotlightActive =>
+      'You already have a post in the spotlight. Wait until it ends.';
+
+  @override
+  String get errNotEnoughPoints => 'You don\'t have enough points for that.';
+
+  @override
+  String get errPostHidden => 'Hidden posts can\'t be spotlit.';
+
+  @override
+  String get ok => 'OK';
+
+  @override
+  String get award => 'Award';
+
+  @override
+  String get awardTitle => 'Give an award?';
+
+  @override
+  String awardBody(int cost, String user, int balance, int left) {
+    return 'Gives $cost of your points to $user and marks their post with an award. You have $balance points and $left awards left today.';
+  }
+
+  @override
+  String awardTooPoor(int cost, int balance) {
+    return 'An award gives away $cost points and you have $balance. You earn a point each time someone likes one of your posts.';
+  }
+
+  @override
+  String awardDone(String user, int balance) {
+    return 'Award given to $user. $balance points left.';
+  }
+
+  @override
+  String get signInToAward => 'Sign in to give awards.';
+
+  @override
+  String get errCannotAwardOwn => 'You can\'t award your own post.';
+
+  @override
+  String get errAccountTooNew =>
+      'New accounts can give awards after a few days.';
+
+  @override
+  String get errAlreadyAwarded => 'You already gave this post an award.';
+
+  @override
+  String get errAwardLimit => 'You\'ve given all your awards for today.';
+
+  @override
+  String notificationAward(String user, String post) {
+    return '$user gave your post \"$post\" an award';
+  }
 }

@@ -173,6 +173,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     final scheme = theme.colorScheme;
     final title = switch (n.type) {
       NotificationType.follow => l.notificationFollow(n.actor.userName),
+      NotificationType.award => l.notificationAward(n.actor.userName, n.postTitle ?? ''),
       NotificationType.mention => l.notificationMention(n.actor.userName, n.postTitle ?? ''),
       NotificationType.comment => l.notificationComment(n.actor.userName, n.postTitle ?? ''),
     };
