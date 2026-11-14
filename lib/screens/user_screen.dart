@@ -191,7 +191,7 @@ class _UserScreenState extends State<UserScreen> {
           padding: const EdgeInsets.all(20),
           child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
             Row(children: [
-              UserAvatar(_userName, radius: 34),
+              UserAvatar(_userName, radius: 34, url: _profile?.avatarUrl),
               const SizedBox(width: 16),
               Expanded(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -296,7 +296,7 @@ class _FollowListScreenState extends State<FollowListScreen> {
     setState(() => _busy.add(u.id));
     try {
       final r = await context.read<ApiClient>().setFollowing(u.id, !u.isFollowing);
-      if (mounted) setState(() => _users[index] = FollowUser(u.id, u.userName, r.following));
+      if (mounted) setState(() => _users[index] = u.withFollowing(r.following));
     } catch (e) {
       if (mounted) showMessage(context, e);
     } finally {
@@ -326,7 +326,7 @@ class _FollowListScreenState extends State<FollowListScreen> {
                 final u = _users[i];
                 return ContentWidth(
                   child: ListTile(
-                    leading: UserAvatar(u.userName, radius: 20),
+                    leading: UserAvatar.of(u.author, radius: 20),
                     title: Text(u.userName, style: const TextStyle(fontWeight: FontWeight.w600)),
                     onTap: () => openUserProfile(context, u.author),
                     trailing: u.id == me ? null : _followButton(i, u),

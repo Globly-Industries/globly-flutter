@@ -219,5 +219,12 @@
   "errAccountTooNew": "Jauni konti var apbalvot pēc dažām dienām.",
   "errAlreadyAwarded": "Jūs jau apbalvojāt šo ierakstu.",
   "errAwardLimit": "Šodienas apbalvojumi ir izlietoti.",
-  "notificationAward": "{user} apbalvoja jūsu ierakstu \"{post}\""
+  "notificationAward": "{user} apbalvoja jūsu ierakstu \"{post}\"",
+
+  "avatarTakePhoto": "Uzņemt foto",
+  "avatarFromPost": "Izvēlēties no maniem ierakstiem",
+  "avatarRemove": "Noņemt profila attēlu",
+  "avatarUpdated": "Profila attēls atjaunināts.",
+  "avatarRemoved": "Profila attēls noņemts.",
+  "avatarNoPosts": "Jums vēl nav foto vai video ierakstu."
 }

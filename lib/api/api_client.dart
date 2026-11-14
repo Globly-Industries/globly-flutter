@@ -126,6 +126,22 @@ class ApiClient {
   Future<Paged<Post>> userPosts(String userId, {int page = 1}) async => Paged.fromJson(
       await _call(() => _dio.get('/api/users/$userId/posts', queryParameters: {'page': page})), Post.fromJson);
 
+  /// Sets the profile picture from a photo just taken; returns its URL.
+  Future<String?> setAvatarPhoto(XFile photo) async {
+    final form = FormData.fromMap({
+      'file': kIsWeb
+          ? MultipartFile.fromBytes(await photo.readAsBytes(), filename: photo.name, contentType: DioMediaType('image', 'jpeg'))
+          : await MultipartFile.fromFile(photo.path, filename: photo.name, contentType: DioMediaType('image', 'jpeg')),
+    });
+    return (await _call(() => _dio.put('/api/users/me/avatar', data: form)))['avatarUrl'] as String?;
+  }
+
+  /// Sets the profile picture from one of the user's photo or video posts; returns its URL.
+  Future<String?> setAvatarFromPost(String postId) async =>
+      (await _call(() => _dio.put('/api/users/me/avatar/from-post/$postId')))['avatarUrl'] as String?;
+
+  Future<void> removeAvatar() => _call(() => _dio.delete('/api/users/me/avatar'));
+
   /// Who follows [userId] ([followers]), or whom [userId] follows.
   Future<Paged<FollowUser>> followList(String userId, {required bool followers, int page = 1}) async => Paged.fromJson(
       await _call(() => _dio.get('/api/users/$userId/${followers ? 'followers' : 'following'}',

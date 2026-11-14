@@ -71,4 +71,11 @@ void main() {
     expect(p.balance, 12);
     expect(p.spotlightUntil, DateTime.utc(2030));
   });
+
+  test('cached user keeps the profile picture', () {
+    final user = User.fromJson({'id': 'u1', 'userName': 'anna', 'avatarUrl': 'https://x/a.jpg'});
+    expect(User.fromJson(user.toJson()).avatarUrl, 'https://x/a.jpg');
+    expect(user.withAvatar(null).avatarUrl, isNull);
+    expect(Author.fromJson({'id': 'u1', 'userName': 'anna'}).avatarUrl, isNull);
+  });
 }

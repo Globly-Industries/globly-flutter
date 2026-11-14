@@ -30,22 +30,28 @@ class User {
   final String id;
   final String userName;
   final bool isAdmin;
+  final String? avatarUrl;
 
-  const User({required this.id, required this.userName, required this.isAdmin});
+  const User({required this.id, required this.userName, required this.isAdmin, this.avatarUrl});
 
   factory User.fromJson(Map<String, dynamic> j) =>
-      User(id: j['id'], userName: j['userName'], isAdmin: j['isAdmin'] ?? false);
+      User(id: j['id'], userName: j['userName'], isAdmin: j['isAdmin'] ?? false, avatarUrl: j['avatarUrl']);
 
-  Map<String, dynamic> toJson() => {'id': id, 'userName': userName, 'isAdmin': isAdmin};
+  Map<String, dynamic> toJson() => {'id': id, 'userName': userName, 'isAdmin': isAdmin, 'avatarUrl': avatarUrl};
+
+  User withAvatar(String? url) => User(id: id, userName: userName, isAdmin: isAdmin, avatarUrl: url);
 }
 
 class Author {
   final String id;
   final String userName;
 
-  const Author(this.id, this.userName);
+  /// Profile picture; null shows initials.
+  final String? avatarUrl;
 
-  factory Author.fromJson(Map<String, dynamic> j) => Author(j['id'], j['userName']);
+  const Author(this.id, this.userName, [this.avatarUrl]);
+
+  factory Author.fromJson(Map<String, dynamic> j) => Author(j['id'], j['userName'], j['avatarUrl']);
 }
 
 /// Someone's public profile.
@@ -56,6 +62,7 @@ class UserProfile {
   final int followerCount;
   final int followingCount;
   final bool isFollowing;
+  final String? avatarUrl;
 
   const UserProfile({
     required this.id,
@@ -64,6 +71,7 @@ class UserProfile {
     required this.followerCount,
     required this.followingCount,
     required this.isFollowing,
+    this.avatarUrl,
   });
 
   factory UserProfile.fromJson(Map<String, dynamic> j) => UserProfile(
@@ -73,6 +81,7 @@ class UserProfile {
         followerCount: j['followerCount'],
         followingCount: j['followingCount'],
         isFollowing: j['isFollowing'] ?? false,
+        avatarUrl: j['avatarUrl'],
       );
 
   UserProfile withFollow(bool following, int followers) => UserProfile(
@@ -82,6 +91,7 @@ class UserProfile {
         followerCount: followers,
         followingCount: followingCount,
         isFollowing: following,
+        avatarUrl: avatarUrl,
       );
 }
 
@@ -347,12 +357,16 @@ class FollowUser {
 
   /// Whether the signed-in user follows them.
   final bool isFollowing;
+  final String? avatarUrl;
 
-  const FollowUser(this.id, this.userName, this.isFollowing);
+  const FollowUser(this.id, this.userName, this.isFollowing, [this.avatarUrl]);
 
-  Author get author => Author(id, userName);
+  Author get author => Author(id, userName, avatarUrl);
 
-  factory FollowUser.fromJson(Map<String, dynamic> j) => FollowUser(j['id'], j['userName'], j['isFollowing'] ?? false);
+  FollowUser withFollowing(bool following) => FollowUser(id, userName, following, avatarUrl);
+
+  factory FollowUser.fromJson(Map<String, dynamic> j) =>
+      FollowUser(j['id'], j['userName'], j['isFollowing'] ?? false, j['avatarUrl']);
 }
 
 class AdminUser {

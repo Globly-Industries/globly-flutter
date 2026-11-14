@@ -14,6 +14,7 @@ import '../widgets/glass.dart';
 import '../widgets/language_menu.dart';
 import '../widgets/post_card.dart';
 import 'admin_screen.dart';
+import 'avatar_picker.dart';
 import 'post_detail_screen.dart';
 import 'user_screen.dart';
 
@@ -25,10 +26,12 @@ class ProfileButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final user = context.select<AuthState, String?>((auth) => auth.user?.userName);
+    final user = context.select<AuthState, User?>((auth) => auth.user);
     final button = IconButton(
       tooltip: context.l10n.navProfile,
-      icon: user == null ? const Icon(Icons.person_outline_rounded) : UserAvatar(user, radius: 14),
+      icon: user == null
+          ? const Icon(Icons.person_outline_rounded)
+          : UserAvatar(user.userName, radius: 14, url: user.avatarUrl),
       onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileScreen())),
     );
     return glass
@@ -156,7 +159,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Row(children: [
-          UserAvatar(auth.user!.userName, radius: 34),
+          // Tap to change the profile picture.
+          GestureDetector(
+            onTap: () => changeAvatar(context),
+            child: Stack(clipBehavior: Clip.none, children: [
+              UserAvatar(auth.user!.userName, radius: 34, url: auth.user!.avatarUrl),
+              Positioned(
+                right: -2,
+                bottom: -2,
+                child: CircleAvatar(
+                  radius: 12,
+                  backgroundColor: theme.colorScheme.primary,
+                  child: Icon(Icons.photo_camera_rounded, size: 14, color: theme.colorScheme.onPrimary),
+                ),
+              ),
+            ]),
+          ),
           const SizedBox(width: 16),
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [

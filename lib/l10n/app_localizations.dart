@@ -1309,6 +1309,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{user} gave your post \"{post}\" an award'**
   String notificationAward(String user, String post);
+
+  /// No description provided for @avatarTakePhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Take a photo'**
+  String get avatarTakePhoto;
+
+  /// No description provided for @avatarFromPost.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose from my posts'**
+  String get avatarFromPost;
+
+  /// No description provided for @avatarRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove profile picture'**
+  String get avatarRemove;
+
+  /// No description provided for @avatarUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile picture updated.'**
+  String get avatarUpdated;
+
+  /// No description provided for @avatarRemoved.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile picture removed.'**
+  String get avatarRemoved;
+
+  /// No description provided for @avatarNoPosts.
+  ///
+  /// In en, this message translates to:
+  /// **'You have no photo or video posts yet.'**
+  String get avatarNoPosts;
 }
 
 class _AppLocalizationsDelegate

@@ -243,5 +243,12 @@
   "@awardBody": { "placeholders": { "cost": { "type": "int" }, "user": { "type": "String" }, "balance": { "type": "int" }, "left": { "type": "int" } } },
   "@awardTooPoor": { "placeholders": { "cost": { "type": "int" }, "balance": { "type": "int" } } },
   "@awardDone": { "placeholders": { "user": { "type": "String" }, "balance": { "type": "int" } } },
-  "@notificationAward": { "placeholders": { "user": { "type": "String" }, "post": { "type": "String" } } }
+  "@notificationAward": { "placeholders": { "user": { "type": "String" }, "post": { "type": "String" } } },
+
+  "avatarTakePhoto": "Take a photo",
+  "avatarFromPost": "Choose from my posts",
+  "avatarRemove": "Remove profile picture",
+  "avatarUpdated": "Profile picture updated.",
+  "avatarRemoved": "Profile picture removed.",
+  "avatarNoPosts": "You have no photo or video posts yet."
 }

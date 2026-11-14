@@ -688,4 +688,22 @@ class AppLocalizationsLv extends AppLocalizations {
   String notificationAward(String user, String post) {
     return '$user apbalvoja jūsu ierakstu \"$post\"';
   }
+
+  @override
+  String get avatarTakePhoto => 'Uzņemt foto';
+
+  @override
+  String get avatarFromPost => 'Izvēlēties no maniem ierakstiem';
+
+  @override
+  String get avatarRemove => 'Noņemt profila attēlu';
+
+  @override
+  String get avatarUpdated => 'Profila attēls atjaunināts.';
+
+  @override
+  String get avatarRemoved => 'Profila attēls noņemts.';
+
+  @override
+  String get avatarNoPosts => 'Jums vēl nav foto vai video ierakstu.';
 }

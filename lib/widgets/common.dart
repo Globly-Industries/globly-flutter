@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 import '../l10n/app_localizations.dart';
@@ -73,7 +74,13 @@ Future<bool> confirm(BuildContext context, String title, String message, {String
 class UserAvatar extends StatelessWidget {
   final String name;
   final double radius;
-  const UserAvatar(this.name, {super.key, this.radius = 20});
+
+  /// Profile picture; the coloured initial shows without one, and while it loads.
+  final String? url;
+  const UserAvatar(this.name, {super.key, this.radius = 20, this.url});
+
+  UserAvatar.of(Author author, {Key? key, double radius = 20})
+      : this(author.userName, key: key, radius: radius, url: author.avatarUrl);
 
   static const _palette = [
     Color(0xFF1E88E5), Color(0xFF00897B), Color(0xFF8E24AA), Color(0xFFE53935),
@@ -83,12 +90,26 @@ class UserAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = _palette[name.codeUnits.fold(0, (a, b) => a + b) % _palette.length];
-    return CircleAvatar(
+    final initial = CircleAvatar(
       radius: radius,
       backgroundColor: color,
       child: Text(
         name.isEmpty ? '?' : name.characters.first.toUpperCase(),
         style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: radius * 0.85),
+      ),
+    );
+    final src = url;
+    if (src == null) return initial;
+    final px = (radius * 2 * MediaQuery.devicePixelRatioOf(context)).round();
+    return ClipOval(
+      child: CachedNetworkImage(
+        imageUrl: src,
+        width: radius * 2,
+        height: radius * 2,
+        memCacheWidth: px,
+        fit: BoxFit.cover,
+        placeholder: (_, _) => initial,
+        errorWidget: (_, _, _) => initial,
       ),
     );
   }

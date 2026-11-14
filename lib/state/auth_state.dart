@@ -89,6 +89,15 @@ class AuthState extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Shows a new profile picture right away and keeps it in the cached user.
+  Future<void> updateAvatar(String? url) async {
+    final user = _user;
+    if (user == null) return;
+    _user = user.withAvatar(url);
+    notifyListeners();
+    await _storage.write(key: _userKey, value: jsonEncode(_user!.toJson()));
+  }
+
   Future<void> _applySession((String, User) session) async {
     final (token, user) = session;
     api.token = token;

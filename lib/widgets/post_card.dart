@@ -42,7 +42,7 @@ class PostCard extends StatelessWidget {
                   onTap: onAuthorTap,
                   behavior: HitTestBehavior.opaque,
                   child: Row(children: [
-                    UserAvatar(post.author.userName, radius: 18),
+                    UserAvatar.of(post.author, radius: 18),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [

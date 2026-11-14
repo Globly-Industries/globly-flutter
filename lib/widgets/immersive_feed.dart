@@ -591,7 +591,7 @@ class _Details extends StatelessWidget {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        UserAvatar(post.author.userName, radius: 16),
+                        UserAvatar.of(post.author, radius: 16),
                         const SizedBox(width: 8),
                         Flexible(
                           child: Text(

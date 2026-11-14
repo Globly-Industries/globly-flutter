@@ -133,7 +133,7 @@ class _CommentsSheetState extends State<_CommentsSheet> {
               children: [
                 GestureDetector(
                   onTap: widget.onOpenAuthor == null ? null : () => widget.onOpenAuthor!(c.author),
-                  child: UserAvatar(c.author.userName, radius: 16),
+                  child: UserAvatar.of(c.author, radius: 16),
                 ),
                 const SizedBox(width: 10),
                 Expanded(

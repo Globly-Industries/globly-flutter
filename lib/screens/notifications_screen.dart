@@ -184,7 +184,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       tileColor: n.isRead ? null : scheme.primary.withValues(alpha: 0.08),
       leading: GestureDetector(
         onTap: () => openUserProfile(context, n.actor),
-        child: UserAvatar(n.actor.userName, radius: 20),
+        child: UserAvatar.of(n.actor, radius: 20),
       ),
       title: Text(title, style: n.isRead ? null : const TextStyle(fontWeight: FontWeight.w600)),
       subtitle: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [

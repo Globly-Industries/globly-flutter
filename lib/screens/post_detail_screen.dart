@@ -415,7 +415,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                 Row(children: [
                   GestureDetector(
                     onTap: () => openUserProfile(context, post.author),
-                    child: UserAvatar(post.author.userName, radius: 20),
+                    child: UserAvatar.of(post.author, radius: 20),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -493,7 +493,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                 Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Padding(
                     padding: const EdgeInsets.only(top: 6),
-                    child: UserAvatar(auth.user!.userName, radius: 18),
+                    child: UserAvatar(auth.user!.userName, radius: 18, url: auth.user!.avatarUrl),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
@@ -545,7 +545,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
         GestureDetector(
           onTap: () => openUserProfile(context, c.author),
-          child: UserAvatar(c.author.userName, radius: 18),
+          child: UserAvatar.of(c.author, radius: 18),
         ),
         const SizedBox(width: 10),
         Expanded(

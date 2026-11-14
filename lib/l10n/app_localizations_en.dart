@@ -684,4 +684,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String notificationAward(String user, String post) {
     return '$user gave your post \"$post\" an award';
   }
+
+  @override
+  String get avatarTakePhoto => 'Take a photo';
+
+  @override
+  String get avatarFromPost => 'Choose from my posts';
+
+  @override
+  String get avatarRemove => 'Remove profile picture';
+
+  @override
+  String get avatarUpdated => 'Profile picture updated.';
+
+  @override
+  String get avatarRemoved => 'Profile picture removed.';
+
+  @override
+  String get avatarNoPosts => 'You have no photo or video posts yet.';
 }
