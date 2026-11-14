@@ -159,8 +159,6 @@ class Post {
   /// Admins only: visible, but the NSFW filter queued it for review.
   final bool needsReview;
 
-  /// Set while the author has it in the spotlight (boosted in the feeds).
-  final DateTime? spotlightUntil;
   final int awardCount;
 
   /// Whether the signed-in user gave it an award.
@@ -191,15 +189,12 @@ class Post {
     required this.updatedAt,
     this.nsfwScore,
     this.needsReview = false,
-    this.spotlightUntil,
     this.awardCount = 0,
     this.myAward = false,
     this.likedBy,
   });
 
   int get score => upvotes - downvotes;
-
-  bool get isSpotlit => spotlightUntil?.isAfter(DateTime.now()) ?? false;
 
   factory Post.fromJson(Map<String, dynamic> j) => Post(
         id: j['id'],
@@ -223,7 +218,6 @@ class Post {
         updatedAt: j['updatedAt'] == null ? null : DateTime.parse(j['updatedAt']),
         nsfwScore: (j['nsfwScore'] as num?)?.toDouble(),
         needsReview: j['needsReview'] ?? false,
-        spotlightUntil: j['spotlightUntil'] == null ? null : DateTime.parse(j['spotlightUntil']),
         awardCount: j['awardCount'] ?? 0,
         myAward: j['myAward'] ?? false,
         likedBy: j['likedBy'] == null ? null : LikedBy.fromJson(j['likedBy']),
@@ -237,7 +231,6 @@ class Post {
     int? commentCount,
     int? myVote,
     bool? isHidden,
-    DateTime? spotlightUntil,
     int? awardCount,
     bool? myAward,
   }) =>
@@ -263,35 +256,22 @@ class Post {
         updatedAt: updatedAt,
         nsfwScore: nsfwScore,
         needsReview: needsReview,
-        spotlightUntil: spotlightUntil ?? this.spotlightUntil,
         awardCount: awardCount ?? this.awardCount,
         myAward: myAward ?? this.myAward,
         likedBy: likedBy,
       );
 }
 
-/// The signed-in user's points and what a spotlight costs them now.
+/// The signed-in user's points and what an award costs them.
 class PointsInfo {
   final int balance;
-  final int spotlightCost;
-  final int spotlightHours;
-  final String? spotlightPostId;
-  final DateTime? spotlightUntil;
   final int awardCost;
   final int awardsLeftToday;
 
-  const PointsInfo(this.balance, this.spotlightCost, this.spotlightHours, this.spotlightPostId, this.spotlightUntil,
-      [this.awardCost = 5, this.awardsLeftToday = 0]);
+  const PointsInfo(this.balance, [this.awardCost = 5, this.awardsLeftToday = 0]);
 
-  factory PointsInfo.fromJson(Map<String, dynamic> j) => PointsInfo(
-        j['balance'],
-        j['spotlightCost'],
-        j['spotlightHours'],
-        j['spotlightPostId'],
-        j['spotlightUntil'] == null ? null : DateTime.parse(j['spotlightUntil']),
-        j['awardCost'] ?? 5,
-        j['awardsLeftToday'] ?? 0,
-      );
+  factory PointsInfo.fromJson(Map<String, dynamic> j) =>
+      PointsInfo(j['balance'], j['awardCost'] ?? 5, j['awardsLeftToday'] ?? 0);
 }
 
 /// A single post (count == 1) or a cluster of posts on the map.

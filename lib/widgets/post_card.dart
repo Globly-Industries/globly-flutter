@@ -6,9 +6,6 @@ import '../theme.dart';
 import 'award.dart';
 import 'common.dart';
 
-/// Marks spotlit posts everywhere they show.
-const spotlightColor = Color(0xFFF5A524);
-
 class PostCard extends StatelessWidget {
   final Post post;
   final VoidCallback? onTap;
@@ -70,18 +67,14 @@ class PostCard extends StatelessWidget {
                 ),
               ),
               if (post.isHidden) ...[
-                Pill(icon: Icons.visibility_off_rounded, label: l.hidden, color: scheme.error),
                 const SizedBox(width: 6),
+                Pill(icon: Icons.visibility_off_rounded, label: l.hidden, color: scheme.error),
               ],
               if (post.awardCount > 0) ...[
+                const SizedBox(width: 6),
                 Pill(icon: Icons.emoji_events_rounded, label: '${post.awardCount}', color: awardColor),
-                const SizedBox(width: 6),
               ],
-              if (post.isSpotlit) ...[
-                Pill(icon: Icons.auto_awesome_rounded, label: l.spotlight, color: spotlightColor),
-                const SizedBox(width: 6),
-              ],
-              trailing ?? MediaPill(post.mediaType),
+              if (trailing case final trailing?) ...[const SizedBox(width: 6), trailing],
             ]),
             const SizedBox(height: 12),
 

@@ -13,7 +13,6 @@ import '../widgets/glass.dart';
 import '../widgets/award.dart';
 import '../widgets/media_view.dart';
 import '../widgets/mention_text.dart';
-import '../widgets/post_card.dart' show spotlightColor;
 import 'user_screen.dart';
 
 const _quickEmoji = ['👍', '❤️', '😂', '😮', '😢', '🔥'];
@@ -263,44 +262,6 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     _changed = true;
   }
 
-  /// Spends the author's points on boosting this post, after showing what it costs.
-  Future<void> _spotlight() async {
-    final l = context.l10n;
-    final post = _post!;
-    try {
-      final info = await _api.points();
-      if (!mounted) return;
-      if (info.spotlightUntil != null) {
-        showMessage(context, info.spotlightPostId == post.id ? l.spotlightAlreadyThis : l.errSpotlightActive);
-        return;
-      }
-      if (info.balance < info.spotlightCost) {
-        await showDialog<void>(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            title: Text(l.spotlightTitle),
-            content: Text(l.spotlightTooPoor(info.spotlightCost, info.balance)),
-            actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: Text(l.ok))],
-          ),
-        );
-        return;
-      }
-      final ok = await confirm(
-        context,
-        l.spotlightTitle,
-        l.spotlightBody(info.spotlightHours, info.spotlightCost, info.balance),
-        action: l.spotlight,
-      );
-      if (!ok) return;
-      final r = await _api.spotlight(post.id);
-      if (!mounted) return;
-      setState(() => _post = post.copyWith(spotlightUntil: r.until));
-      _changed = true;
-      showMessage(context, l.spotlightDone(r.balance));
-    } catch (e) {
-      if (mounted) showMessage(context, e);
-    }
-  }
 
   Future<void> _delete() async {
     final l = context.l10n;
@@ -353,17 +314,11 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     final canModify = isOwner || auth.isAdmin;
     return PopupMenuButton<String>(
       onSelected: (v) => switch (v) {
-        'spotlight' => _spotlight(),
         'edit' => _edit(),
         'delete' => _delete(),
         _ => _report(),
       },
       itemBuilder: (_) => [
-        if (isOwner && !post.isHidden)
-          PopupMenuItem(
-            value: 'spotlight',
-            child: ListTile(leading: const Icon(Icons.auto_awesome_rounded), title: Text(l.spotlight)),
-          ),
         if (canModify) PopupMenuItem(value: 'edit', child: ListTile(leading: const Icon(Icons.edit_rounded), title: Text(l.edit))),
         if (canModify) PopupMenuItem(value: 'delete', child: ListTile(leading: const Icon(Icons.delete_rounded), title: Text(l.delete))),
         if (!isOwner) PopupMenuItem(value: 'report', child: ListTile(leading: const Icon(Icons.flag_rounded), title: Text(l.report))),
@@ -435,12 +390,6 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                       ]),
                     ]),
                   ),
-                  const SizedBox(width: 8),
-                  if (post.isSpotlit) ...[
-                    Pill(icon: Icons.auto_awesome_rounded, label: l.spotlight, color: spotlightColor),
-                    const SizedBox(width: 6),
-                  ],
-                  MediaPill(post.mediaType),
                 ]),
                 const SizedBox(height: 18),
 

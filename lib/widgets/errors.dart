@@ -50,7 +50,6 @@ String errorMessage(BuildContext context, Object error) {
     'text_required' => l.errTextRequired,
     'comment_empty' => l.errCommentEmpty,
     'cannot_delete_self' => l.errCannotDeleteSelf,
-    'spotlight_active' => l.errSpotlightActive,
     'not_enough_points' => l.errNotEnoughPoints,
     'post_hidden' => l.errPostHidden,
     'cannot_award_own' => l.errCannotAwardOwn,

@@ -1184,48 +1184,6 @@ abstract class AppLocalizations {
   /// **'Points'**
   String get points;
 
-  /// No description provided for @spotlight.
-  ///
-  /// In en, this message translates to:
-  /// **'Spotlight'**
-  String get spotlight;
-
-  /// No description provided for @spotlightTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Put this post in the spotlight?'**
-  String get spotlightTitle;
-
-  /// No description provided for @spotlightBody.
-  ///
-  /// In en, this message translates to:
-  /// **'For {hours} hours your post gets a boost in Recent and Nearby and a Spotlight label. It costs {cost} of your {balance} points. A spotlight gets your post seen, likes are still up to the post.'**
-  String spotlightBody(int hours, int cost, int balance);
-
-  /// No description provided for @spotlightTooPoor.
-  ///
-  /// In en, this message translates to:
-  /// **'A spotlight costs {cost} points and you have {balance}. You earn a point each time someone likes one of your posts.'**
-  String spotlightTooPoor(int cost, int balance);
-
-  /// No description provided for @spotlightDone.
-  ///
-  /// In en, this message translates to:
-  /// **'Your post is in the spotlight. {balance} points left.'**
-  String spotlightDone(int balance);
-
-  /// No description provided for @spotlightAlreadyThis.
-  ///
-  /// In en, this message translates to:
-  /// **'This post is already in the spotlight.'**
-  String get spotlightAlreadyThis;
-
-  /// No description provided for @errSpotlightActive.
-  ///
-  /// In en, this message translates to:
-  /// **'You already have a post in the spotlight. Wait until it ends.'**
-  String get errSpotlightActive;
-
   /// No description provided for @errNotEnoughPoints.
   ///
   /// In en, this message translates to:
@@ -1235,7 +1193,7 @@ abstract class AppLocalizations {
   /// No description provided for @errPostHidden.
   ///
   /// In en, this message translates to:
-  /// **'Hidden posts can\'t be spotlit.'**
+  /// **'This post is hidden, so that isn\'t possible.'**
   String get errPostHidden;
 
   /// No description provided for @ok.

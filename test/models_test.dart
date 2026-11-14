@@ -60,16 +60,10 @@ void main() {
     expect(n.markedRead().isRead, isTrue);
   });
 
-  test('PointsInfo parses an active spotlight', () {
-    final p = PointsInfo.fromJson({
-      'balance': 12,
-      'spotlightCost': 20,
-      'spotlightHours': 24,
-      'spotlightPostId': 'p1',
-      'spotlightUntil': '2030-01-01T00:00:00Z',
-    });
+  test('PointsInfo parses balance and awards', () {
+    final p = PointsInfo.fromJson({'balance': 12, 'awardCost': 5, 'awardsLeftToday': 2});
     expect(p.balance, 12);
-    expect(p.spotlightUntil, DateTime.utc(2030));
+    expect(p.awardsLeftToday, 2);
   });
 
   test('cached user keeps the profile picture', () {

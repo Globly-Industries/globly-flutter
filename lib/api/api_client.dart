@@ -223,12 +223,6 @@ class ApiClient {
 
   Future<PointsInfo> points() async => PointsInfo.fromJson(await _call(() => _dio.get('/api/points')));
 
-  /// Spends points to spotlight [postId]; returns the new balance and when the spotlight ends.
-  Future<({int balance, DateTime until})> spotlight(String postId) async {
-    final data = await _call(() => _dio.post('/api/posts/$postId/spotlight'));
-    return (balance: data['balance'] as int, until: DateTime.parse(data['until']));
-  }
-
   /// Gives [postId]'s author an award from the user's points; returns the new balance and award count.
   Future<({int balance, int awardCount})> award(String postId) async {
     final data = await _call(() => _dio.post('/api/posts/$postId/award'));

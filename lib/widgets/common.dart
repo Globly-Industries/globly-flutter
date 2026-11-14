@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 
 import '../l10n/app_localizations.dart';
 import '../models/models.dart';
-import '../theme.dart';
 import 'errors.dart';
 
 extension L10nContext on BuildContext {
@@ -143,15 +142,6 @@ class Pill extends StatelessWidget {
       ]),
     );
   }
-}
-
-class MediaPill extends StatelessWidget {
-  final MediaType type;
-  const MediaPill(this.type, {super.key});
-
-  @override
-  Widget build(BuildContext context) =>
-      Pill(icon: mediaIcon(type), label: mediaLabel(context, type), color: AppTheme.mediaColor(type));
 }
 
 /// Friendly placeholder for empty lists and errors.

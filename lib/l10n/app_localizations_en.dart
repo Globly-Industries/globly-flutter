@@ -607,38 +607,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get points => 'Points';
 
   @override
-  String get spotlight => 'Spotlight';
-
-  @override
-  String get spotlightTitle => 'Put this post in the spotlight?';
-
-  @override
-  String spotlightBody(int hours, int cost, int balance) {
-    return 'For $hours hours your post gets a boost in Recent and Nearby and a Spotlight label. It costs $cost of your $balance points. A spotlight gets your post seen, likes are still up to the post.';
-  }
-
-  @override
-  String spotlightTooPoor(int cost, int balance) {
-    return 'A spotlight costs $cost points and you have $balance. You earn a point each time someone likes one of your posts.';
-  }
-
-  @override
-  String spotlightDone(int balance) {
-    return 'Your post is in the spotlight. $balance points left.';
-  }
-
-  @override
-  String get spotlightAlreadyThis => 'This post is already in the spotlight.';
-
-  @override
-  String get errSpotlightActive =>
-      'You already have a post in the spotlight. Wait until it ends.';
-
-  @override
   String get errNotEnoughPoints => 'You don\'t have enough points for that.';
 
   @override
-  String get errPostHidden => 'Hidden posts can\'t be spotlit.';
+  String get errPostHidden => 'This post is hidden, so that isn\'t possible.';
 
   @override
   String get ok => 'OK';

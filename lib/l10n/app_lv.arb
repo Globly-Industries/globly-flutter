@@ -198,15 +198,8 @@
   "notificationFollow": "{user} sāka jums sekot",
 
   "points": "Punkti",
-  "spotlight": "Izcelt",
-  "spotlightTitle": "Izcelt šo ierakstu?",
-  "spotlightBody": "{hours} stundas jūsu ieraksts tiks izcelts sadaļās Jaunākie un Tuvumā un apzīmēts kā izcelts. Tas maksā {cost} no jūsu {balance} punktiem. Izcelšana palīdz ierakstu ieraudzīt, bet patīk vai nē, izlemj skatītāji.",
-  "spotlightTooPoor": "Izcelšana maksā {cost} punktus, jums ir {balance}. Punktu saņemat katru reizi, kad kādam patīk jūsu ieraksts.",
-  "spotlightDone": "Jūsu ieraksts ir izcelts. Atlikuši {balance} punkti.",
-  "spotlightAlreadyThis": "Šis ieraksts jau ir izcelts.",
-  "errSpotlightActive": "Jums jau ir izcelts ieraksts. Pagaidiet, līdz tas beidzas.",
   "errNotEnoughPoints": "Jums nepietiek punktu.",
-  "errPostHidden": "Paslēptus ierakstus nevar izcelt.",
+  "errPostHidden": "Šis ieraksts ir paslēpts, tāpēc tas nav iespējams.",
   "ok": "Labi",
 
   "award": "Apbalvot",

@@ -612,38 +612,11 @@ class AppLocalizationsLv extends AppLocalizations {
   String get points => 'Punkti';
 
   @override
-  String get spotlight => 'Izcelt';
-
-  @override
-  String get spotlightTitle => 'Izcelt šo ierakstu?';
-
-  @override
-  String spotlightBody(int hours, int cost, int balance) {
-    return '$hours stundas jūsu ieraksts tiks izcelts sadaļās Jaunākie un Tuvumā un apzīmēts kā izcelts. Tas maksā $cost no jūsu $balance punktiem. Izcelšana palīdz ierakstu ieraudzīt, bet patīk vai nē, izlemj skatītāji.';
-  }
-
-  @override
-  String spotlightTooPoor(int cost, int balance) {
-    return 'Izcelšana maksā $cost punktus, jums ir $balance. Punktu saņemat katru reizi, kad kādam patīk jūsu ieraksts.';
-  }
-
-  @override
-  String spotlightDone(int balance) {
-    return 'Jūsu ieraksts ir izcelts. Atlikuši $balance punkti.';
-  }
-
-  @override
-  String get spotlightAlreadyThis => 'Šis ieraksts jau ir izcelts.';
-
-  @override
-  String get errSpotlightActive =>
-      'Jums jau ir izcelts ieraksts. Pagaidiet, līdz tas beidzas.';
-
-  @override
   String get errNotEnoughPoints => 'Jums nepietiek punktu.';
 
   @override
-  String get errPostHidden => 'Paslēptus ierakstus nevar izcelt.';
+  String get errPostHidden =>
+      'Šis ieraksts ir paslēpts, tāpēc tas nav iespējams.';
 
   @override
   String get ok => 'Labi';
