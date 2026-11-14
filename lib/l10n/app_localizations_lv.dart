@@ -698,4 +698,14 @@ class AppLocalizationsLv extends AppLocalizations {
   @override
   String get shareLikesHint =>
       'Jums tīkami ieraksti var parādīties viņu plūsmās.';
+
+  @override
+  String postsHere(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Ieraksti šeit: $count',
+    );
+    return '$_temp0';
+  }
 }

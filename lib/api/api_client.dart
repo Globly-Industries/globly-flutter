@@ -93,6 +93,19 @@ class ApiClient {
     return (data as List).map((e) => MapPoint.fromJson(e)).toList();
   }
 
+  /// The posts of a map cluster, ranked like the feed.
+  Future<Paged<Post>> mapArea(MapBounds area, {int page = 1, PostFilter filter = const PostFilter()}) async {
+    final data = await _call(() => _dio.get('/api/posts/map/area', queryParameters: {
+          'minLat': area.minLat,
+          'minLng': area.minLng,
+          'maxLat': area.maxLat,
+          'maxLng': area.maxLng,
+          'page': page,
+          ...filter.toQuery(),
+        }));
+    return Paged.fromJson(data, Post.fromJson);
+  }
+
   /// A ranked feed tab. [lat]/[lng] are required for [FeedTab.nearby].
   Future<Paged<Post>> feed({
     int page = 1,

@@ -48,7 +48,7 @@ void main() {
   });
 
   group('GeoJSON', () {
-    const cluster = MapPoint(1, 2, 1500, null, null, null);
+    const cluster = MapPoint(1, 2, 1500, null, null, null, null, 0.7);
     const pin = MapPoint(3, 4, 1, 'post-1', MediaType.video, 'Title');
     const approximate = MapPoint(5, 6, 1, 'post-2', MediaType.image, 'Title', 1000);
 
@@ -60,13 +60,14 @@ void main() {
       expect(pointFeatures([pin]).single['geometry']['coordinates'], [4, 3]);
     });
 
-    test('clusters carry their label, size and colours', () {
+    test('clusters carry their label, size, colours and rank', () {
       final p = pointFeatures([cluster]).single['properties'];
       expect(p['kind'], 'cluster');
       expect(p['label'], '1.5k');
       expect(p['radius'], clusterDiameter(1500) / 2);
       expect(p['color'], 'rgb(16,32,48)');
       expect(p['textColor'], 'rgb(255,255,255)');
+      expect(p['rank'], 0.7);
     });
 
     test('exact posts get a tipped pin anchored at the tip, approximate ones a round centred pin', () {
@@ -75,6 +76,12 @@ void main() {
       expect(features[0]['properties']['anchor'], 'bottom');
       expect(features[1]['properties']['icon'], 'globly-pin-image-round');
       expect(features[1]['properties']['anchor'], 'center');
+    });
+
+    test('clusters only split by zooming if their posts are far enough apart', () {
+      expect(clusterCanSplit(const MapBounds(10, 20, 10, 20)), isFalse);
+      expect(clusterCanSplit(const MapBounds(10, 20, 10.00001, 20.00001)), isFalse);
+      expect(clusterCanSplit(const MapBounds(10, 20, 10.001, 20)), isTrue);
     });
 
     test('tap keys identify posts and clusters', () {

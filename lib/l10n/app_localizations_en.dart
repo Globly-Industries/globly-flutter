@@ -698,4 +698,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get shareLikesHint => 'Posts you like can show up in their feeds.';
+
+  @override
+  String postsHere(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count posts here',
+      one: '1 post here',
+    );
+    return '$_temp0';
+  }
 }

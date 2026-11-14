@@ -131,10 +131,39 @@ class MapboxPostsMapState extends State<MapboxPostsMap> {
     if (camera != null) await _flyTo(point, math.max(camera.zoom, 13 - mapboxZoomOffset));
   }
 
-  /// Zooms in far enough that the server splits the cluster at [point].
-  Future<void> zoomIntoCluster(LatLng point) async {
+  /// Whether the camera is as close as it goes, so clusters can't be split by zooming.
+  Future<bool> atMaxZoom() async {
     final camera = await _map?.getCameraState();
-    if (camera != null) await _flyTo(point, math.min(camera.zoom + 2, _maxZoom));
+    return camera != null && camera.zoom >= _maxZoom - 0.05;
+  }
+
+  /// Zooms to fit a cluster's posts, so the server splits it.
+  Future<void> zoomIntoCluster(MapPoint cluster) async {
+    final map = _map;
+    final b = cluster.bounds;
+    if (map == null) return;
+    final camera = await map.getCameraState();
+    var zoom = math.min(camera.zoom + 2, _maxZoom);
+    var center = LatLng(cluster.latitude, cluster.longitude);
+    if (b != null) {
+      final fit = await map.cameraForCoordinateBounds(
+        mbx.CoordinateBounds(
+          southwest: mbx.Point(coordinates: mbx.Position(b.minLng, b.minLat)),
+          northeast: mbx.Point(coordinates: mbx.Position(b.maxLng, b.maxLat)),
+          infiniteBounds: false,
+        ),
+        mbx.MbxEdgeInsets(top: 96, left: 64, bottom: 96, right: 64),
+        null,
+        null,
+        _maxZoom,
+        null,
+      );
+      final c = fit.center?.coordinates;
+      if (c != null) center = LatLng(c.lat.toDouble(), c.lng.toDouble());
+      // At least one step in, so a tap always makes progress.
+      zoom = (fit.zoom ?? zoom).clamp(math.min(camera.zoom + 1, _maxZoom), _maxZoom);
+    }
+    await _flyTo(center, zoom);
   }
 
   Future<void> _flyTo(LatLng point, double zoom, {int durationMs = 800}) async {
@@ -160,7 +189,7 @@ class MapboxPostsMapState extends State<MapboxPostsMap> {
     await _flyTo(target, _introZoom, durationMs: MediaQuery.disableAnimationsOf(context) ? 0 : _introDurationMs);
   }
 
-  static const _maxZoom = 18 - mapboxZoomOffset;
+  static const _maxZoom = maxServerZoom - mapboxZoomOffset;
 
   Future<void> _onMapCreated(mbx.MapboxMap map) async {
     _map = map;
@@ -213,6 +242,8 @@ class MapboxPostsMapState extends State<MapboxPostsMap> {
       lineWidth: 1.5,
       lineEmissiveStrength: _selfLit,
     ));
+    // Better ranked posts draw on top where pins overlap.
+    const rank = <Object>['get', 'rank'];
     await map.addLayer(mbx.CircleLayer(
       id: _clusterLayer,
       sourceId: _pointsSource,
@@ -221,6 +252,7 @@ class MapboxPostsMapState extends State<MapboxPostsMap> {
       circleColorExpression: const ['get', 'color'],
       circleStrokeColor: Colors.white.toARGB32(),
       circleStrokeWidth: 3,
+      circleSortKeyExpression: rank,
       circleEmissiveStrength: _selfLit,
     ));
     await map.addLayer(mbx.SymbolLayer(
@@ -233,6 +265,7 @@ class MapboxPostsMapState extends State<MapboxPostsMap> {
       textSize: 14,
       textAllowOverlap: true,
       textIgnorePlacement: true,
+      symbolSortKeyExpression: rank,
       textEmissiveStrength: _selfLit,
     ));
     await map.addLayer(mbx.SymbolLayer(
@@ -243,6 +276,7 @@ class MapboxPostsMapState extends State<MapboxPostsMap> {
       iconAnchorExpression: const ['get', 'anchor'],
       iconAllowOverlap: true,
       iconIgnorePlacement: true,
+      symbolSortKeyExpression: rank,
       iconEmissiveStrength: _selfLit,
     ));
 

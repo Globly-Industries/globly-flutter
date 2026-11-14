@@ -15,6 +15,7 @@ import '../widgets/errors.dart';
 import '../widgets/filter_sheet.dart';
 import '../widgets/glass.dart';
 import '../widgets/location.dart';
+import '../widgets/map_geo.dart';
 import '../widgets/mapbox_posts_map.dart';
 import '../widgets/post_card.dart';
 import 'notifications_screen.dart';
@@ -110,14 +111,23 @@ class MapScreenState extends State<MapScreen> {
     }
   }
 
-  void _onPointTap(MapPoint p) {
-    if (p.isCluster) {
-      // The camera change triggers the reload.
-      _mapbox.currentState?.zoomIntoCluster(LatLng(p.latitude, p.longitude));
+  Future<void> _onPointTap(MapPoint p) async {
+    if (!p.isCluster) return _showPreview(p.postId!);
+    final map = _mapbox.currentState;
+    final bounds = p.bounds;
+    // Posts too close together to show apart are listed instead.
+    if (bounds != null && (!clusterCanSplit(bounds) || await map?.atMaxZoom() == true)) {
+      if (mounted) await _showCluster(p, bounds);
     } else {
-      _showPreview(p.postId!);
+      // The camera change triggers the reload.
+      await map?.zoomIntoCluster(p);
     }
   }
+
+  Future<void> _showCluster(MapPoint cluster, MapBounds bounds) => showGlassSheet<void>(
+        context,
+        builder: (_) => _ClusterPosts(count: cluster.count, bounds: bounds, filter: _filters.filter, onChanged: _load),
+      );
 
   void _toggleType(MediaType type) {
     final f = _filters.filter;
@@ -337,6 +347,98 @@ class _FilterRow extends StatelessWidget {
             ]),
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// The posts of a cluster that can't be split by zooming, best first.
+class _ClusterPosts extends StatefulWidget {
+  final int count;
+  final MapBounds bounds;
+  final PostFilter filter;
+
+  /// A post was changed or deleted in the viewer.
+  final VoidCallback onChanged;
+  const _ClusterPosts({required this.count, required this.bounds, required this.filter, required this.onChanged});
+
+  @override
+  State<_ClusterPosts> createState() => _ClusterPostsState();
+}
+
+class _ClusterPostsState extends State<_ClusterPosts> {
+  final _posts = <Post>[];
+  var _page = 0;
+  var _hasMore = true;
+  var _loading = false;
+  Object? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadMore();
+  }
+
+  Future<void> _loadMore() async {
+    if (_loading || !_hasMore) return;
+    setState(() => _loading = true);
+    try {
+      final result = await context.read<ApiClient>().mapArea(widget.bounds, page: _page + 1, filter: widget.filter);
+      if (!mounted) return;
+      final seen = {for (final p in _posts) p.id};
+      setState(() {
+        _page++;
+        // Rankings can shift between pages.
+        _posts.addAll(result.items.where((p) => !seen.contains(p.id)));
+        _hasMore = result.hasMore;
+      });
+    } catch (e) {
+      if (mounted) setState(() => _error = e);
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _open(Post post) async {
+    final changed = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(builder: (_) => PostViewerScreen(postId: post.id, initial: post)),
+    );
+    if (changed == true) widget.onChanged();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.75),
+        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+            child: Text(context.l10n.postsHere(widget.count), style: Theme.of(context).textTheme.titleMedium),
+          ),
+          Flexible(
+            child: _error != null && _posts.isEmpty
+                ? EmptyState(icon: Icons.error_outline_rounded, title: errorMessage(context, _error!))
+                : NotificationListener<ScrollNotification>(
+                    onNotification: (n) {
+                      if (n.metrics.extentAfter < 400) _loadMore();
+                      return false;
+                    },
+                    child: ListView.separated(
+                      shrinkWrap: true,
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                      itemCount: _posts.length + (_hasMore ? 1 : 0),
+                      separatorBuilder: (_, _) => const SizedBox(height: 8),
+                      itemBuilder: (context, i) => i < _posts.length
+                          ? PostCard(post: _posts[i], compact: true, onTap: () => _open(_posts[i]))
+                          : const Padding(
+                              padding: EdgeInsets.all(16),
+                              child: Center(child: CircularProgressIndicator()),
+                            ),
+                    ),
+                  ),
+          ),
+        ]),
       ),
     );
   }

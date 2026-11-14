@@ -1327,6 +1327,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Posts you like can show up in their feeds.'**
   String get shareLikesHint;
+
+  /// No description provided for @postsHere.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 post here} other{{count} posts here}}'**
+  String postsHere(int count);
 }
 
 class _AppLocalizationsDelegate

@@ -224,5 +224,6 @@
   "likedByTwo": "Patīk {first} un {second}",
   "likedByMany": "Patīk {name} un vēl {others}",
   "shareLikes": "Rādīt sekotājiem, kas man patīk",
-  "shareLikesHint": "Jums tīkami ieraksti var parādīties viņu plūsmās."
+  "shareLikesHint": "Jums tīkami ieraksti var parādīties viņu plūsmās.",
+  "postsHere": "{count, plural, other{Ieraksti šeit: {count}}}"
 }

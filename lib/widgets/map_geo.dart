@@ -66,9 +66,22 @@ String mapPointKey(MapPoint p) => p.postId ?? 'cluster:${p.latitude},${p.longitu
 /// The name of the map image for a post pin. Pins without a tip mark the middle of an area.
 String pinImageId(MediaType? type, {required bool tip}) => 'globly-pin-${(type ?? MediaType.text).name}${tip ? '' : '-round'}';
 
-double clusterDiameter(int count) => 40 + math.min(28, math.log(count) * 6);
+/// Closest zoom (server scale) the app allows.
+const maxServerZoom = 18.0;
+
+/// Mirrors the server's ClusterCellPixels (GeoService.cs).
+const _clusterCellPixels = 60.0;
+
+/// Whether zooming in, at most to [maxServerZoom], can show a cluster's posts apart. The server's
+/// grid is in degrees on both axes.
+bool clusterCanSplit(MapBounds b) {
+  final cell = 360 / (256 * math.pow(2, maxServerZoom)) * _clusterCellPixels;
+  return b.maxLat - b.minLat >= cell || b.maxLng - b.minLng >= cell;
+}
 
 String clusterLabel(int count) => count > 999 ? '${(count / 1000).toStringAsFixed(count < 10000 ? 1 : 0)}k' : '$count';
+
+double clusterDiameter(int count) => 40 + math.min(28, math.log(count) * 6);
 
 String _cssColor(Color c) => 'rgb(${(c.r * 255).round()},${(c.g * 255).round()},${(c.b * 255).round()})';
 
@@ -83,21 +96,21 @@ String pointsGeoJson(List<MapPoint> points, {required Color clusterColor, requir
               'type': 'Point',
               'coordinates': [p.longitude, p.latitude],
             },
-            'properties': p.isCluster
-                ? {
-                    'kind': 'cluster',
-                    'key': mapPointKey(p),
-                    'label': clusterLabel(p.count),
-                    'radius': clusterDiameter(p.count) / 2,
-                    'color': _cssColor(clusterColor),
-                    'textColor': _cssColor(clusterTextColor),
-                  }
-                : {
-                    'kind': 'pin',
-                    'key': mapPointKey(p),
-                    'icon': pinImageId(p.mediaType, tip: p.locationRadiusMeters == null),
-                    'anchor': p.locationRadiusMeters == null ? 'bottom' : 'center',
-                  },
+            'properties': {
+              'key': mapPointKey(p),
+              'rank': p.score,
+              if (p.isCluster) ...{
+                'kind': 'cluster',
+                'label': clusterLabel(p.count),
+                'radius': clusterDiameter(p.count) / 2,
+                'color': _cssColor(clusterColor),
+                'textColor': _cssColor(clusterTextColor),
+              } else ...{
+                'kind': 'pin',
+                'icon': pinImageId(p.mediaType, tip: p.locationRadiusMeters == null),
+                'anchor': p.locationRadiusMeters == null ? 'bottom' : 'center',
+              },
+            },
           },
       ],
     });

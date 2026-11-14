@@ -248,5 +248,7 @@
   "likedByMany": "{others, plural, =1{Liked by {name} and 1 other} other{Liked by {name} and {others} others}}",
   "@likedByMany": { "placeholders": { "name": { "type": "String" }, "others": { "type": "int" } } },
   "shareLikes": "Show my likes to followers",
-  "shareLikesHint": "Posts you like can show up in their feeds."
+  "shareLikesHint": "Posts you like can show up in their feeds.",
+  "postsHere": "{count, plural, =1{1 post here} other{{count} posts here}}",
+  "@postsHere": { "placeholders": { "count": { "type": "int" } } }
 }

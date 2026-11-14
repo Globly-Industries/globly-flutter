@@ -286,6 +286,12 @@ class MapPoint {
   /// Null when precise; otherwise a single post's location is only known to within this many meters.
   final int? locationRadiusMeters;
 
+  /// Feed-style rank of the (best) post; higher draws on top.
+  final double score;
+
+  /// The area a cluster's posts cover.
+  final MapBounds? bounds;
+
   const MapPoint(
     this.latitude,
     this.longitude,
@@ -294,6 +300,8 @@ class MapPoint {
     this.mediaType,
     this.title, [
     this.locationRadiusMeters,
+    this.score = 0,
+    this.bounds,
   ]);
 
   bool get isCluster => count > 1;
@@ -306,6 +314,24 @@ class MapPoint {
         j['mediaType'] == null ? null : MediaType.fromApi(j['mediaType']),
         j['title'],
         j['locationRadiusMeters'],
+        (j['score'] as num?)?.toDouble() ?? 0,
+        j['bounds'] == null ? null : MapBounds.fromJson(j['bounds']),
+      );
+}
+
+class MapBounds {
+  final double minLat;
+  final double minLng;
+  final double maxLat;
+  final double maxLng;
+
+  const MapBounds(this.minLat, this.minLng, this.maxLat, this.maxLng);
+
+  factory MapBounds.fromJson(Map<String, dynamic> j) => MapBounds(
+        (j['minLat'] as num).toDouble(),
+        (j['minLng'] as num).toDouble(),
+        (j['maxLat'] as num).toDouble(),
+        (j['maxLng'] as num).toDouble(),
       );
 }
 
