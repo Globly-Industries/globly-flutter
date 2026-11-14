@@ -12,6 +12,7 @@ import '../widgets/errors.dart';
 import '../widgets/glass.dart';
 import '../widgets/media_view.dart';
 import '../widgets/mention_text.dart';
+import 'user_screen.dart';
 
 const _quickEmoji = ['👍', '❤️', '😂', '😮', '😢', '🔥'];
 const _maxCommentLength = 1000;
@@ -358,11 +359,18 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 // Author, time and place.
                 Row(children: [
-                  UserAvatar(post.author.userName, radius: 20),
+                  GestureDetector(
+                    onTap: () => openUserProfile(context, post.author),
+                    child: UserAvatar(post.author.userName, radius: 20),
+                  ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Text(post.author.userName, style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
+                      GestureDetector(
+                        onTap: () => openUserProfile(context, post.author),
+                        child: Text(post.author.userName,
+                            style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
+                      ),
                       const SizedBox(height: 2),
                       Row(children: [
                         Text(timeAgo(context, post.createdAt), style: muted),
@@ -469,7 +477,10 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        UserAvatar(c.author.userName, radius: 18),
+        GestureDetector(
+          onTap: () => openUserProfile(context, c.author),
+          child: UserAvatar(c.author.userName, radius: 18),
+        ),
         const SizedBox(width: 10),
         Expanded(
           child: Container(
@@ -485,7 +496,11 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
             ),
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Row(children: [
-                Text(c.author.userName, style: theme.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700)),
+                GestureDetector(
+                  onTap: () => openUserProfile(context, c.author),
+                  child: Text(c.author.userName,
+                      style: theme.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700)),
+                ),
                 const SizedBox(width: 8),
                 Text(timeAgo(context, c.createdAt),
                     style: theme.textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant)),

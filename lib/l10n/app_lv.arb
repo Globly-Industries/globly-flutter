@@ -182,5 +182,18 @@
   "soundOn": "Ieslēgt skaņu",
   "soundOff": "Izslēgt skaņu",
   "readMore": "Lasīt vairāk",
-  "postDetails": "Ieraksta informācija"
+  "postDetails": "Ieraksta informācija",
+
+  "following": "Sekojamie",
+  "followers": "Sekotāji",
+  "follow": "Sekot",
+  "unfollow": "Nesekot",
+  "followingSignIn": "Pieslēdzieties, lai sekotu cilvēkiem un redzētu šeit viņu ierakstus.",
+  "followingEmpty": "No jūsu sekojamajiem vēl nav ierakstu",
+  "followingEmptyHint": "Pieskarieties kāda vārdam pie ieraksta, lai atvērtu profilu un sekotu.",
+  "signInToFollow": "Pieslēdzieties, lai sekotu cilvēkiem.",
+  "noUserPosts": "Vēl nav ierakstu.",
+  "noFollowers": "Vēl nav sekotāju.",
+  "noFollowing": "Vēl nekam neseko.",
+  "notificationFollow": "{user} sāka jums sekot"
 }

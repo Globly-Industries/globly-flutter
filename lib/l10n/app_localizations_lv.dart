@@ -567,4 +567,44 @@ class AppLocalizationsLv extends AppLocalizations {
 
   @override
   String get postDetails => 'Ieraksta informācija';
+
+  @override
+  String get following => 'Sekojamie';
+
+  @override
+  String get followers => 'Sekotāji';
+
+  @override
+  String get follow => 'Sekot';
+
+  @override
+  String get unfollow => 'Nesekot';
+
+  @override
+  String get followingSignIn =>
+      'Pieslēdzieties, lai sekotu cilvēkiem un redzētu šeit viņu ierakstus.';
+
+  @override
+  String get followingEmpty => 'No jūsu sekojamajiem vēl nav ierakstu';
+
+  @override
+  String get followingEmptyHint =>
+      'Pieskarieties kāda vārdam pie ieraksta, lai atvērtu profilu un sekotu.';
+
+  @override
+  String get signInToFollow => 'Pieslēdzieties, lai sekotu cilvēkiem.';
+
+  @override
+  String get noUserPosts => 'Vēl nav ierakstu.';
+
+  @override
+  String get noFollowers => 'Vēl nav sekotāju.';
+
+  @override
+  String get noFollowing => 'Vēl nekam neseko.';
+
+  @override
+  String notificationFollow(String user) {
+    return '$user sāka jums sekot';
+  }
 }

@@ -93,21 +93,51 @@ class ApiClient {
     return (data as List).map((e) => MapPoint.fromJson(e)).toList();
   }
 
-  Future<Paged<Post>> feed({int page = 1, PostFilter filter = const PostFilter()}) async {
-    final data = await _call(() => _dio.get('/api/posts/feed', queryParameters: {'page': page, ...filter.toQuery()}));
+  /// A ranked feed tab. [lat]/[lng] are required for [FeedTab.nearby].
+  Future<Paged<Post>> feed({
+    int page = 1,
+    FeedTab tab = FeedTab.recent,
+    double? lat,
+    double? lng,
+    double? radiusKm,
+    PostFilter filter = const PostFilter(),
+  }) async {
+    final data = await _call(() => _dio.get('/api/posts/feed', queryParameters: {
+          'page': page,
+          'tab': tab.apiName,
+          'lat': ?lat,
+          'lng': ?lng,
+          'radiusKm': ?radiusKm,
+          ...filter.toQuery(),
+        }));
     return Paged.fromJson(data, Post.fromJson);
-  }
-
-  Future<List<Post>> nearby(double lat, double lng, {double radiusKm = 25, PostFilter filter = const PostFilter()}) async {
-    final data = await _call(() => _dio.get('/api/posts/nearby',
-        queryParameters: {'lat': lat, 'lng': lng, 'radiusKm': radiusKm, ...filter.toQuery()}));
-    return (data as List).map((e) => Post.fromJson(e)).toList();
   }
 
   Future<Paged<Post>> myPosts({int page = 1}) async =>
       Paged.fromJson(await _call(() => _dio.get('/api/posts/mine', queryParameters: {'page': page})), Post.fromJson);
 
   Future<Post> post(String id) async => Post.fromJson(await _call(() => _dio.get('/api/posts/$id')));
+
+  // ---------- Users ----------
+
+  Future<UserProfile> userProfile(String userId) async =>
+      UserProfile.fromJson(await _call(() => _dio.get('/api/users/$userId')));
+
+  Future<Paged<Post>> userPosts(String userId, {int page = 1}) async => Paged.fromJson(
+      await _call(() => _dio.get('/api/users/$userId/posts', queryParameters: {'page': page})), Post.fromJson);
+
+  /// Who follows [userId] ([followers]), or whom [userId] follows.
+  Future<Paged<FollowUser>> followList(String userId, {required bool followers, int page = 1}) async => Paged.fromJson(
+      await _call(() => _dio.get('/api/users/$userId/${followers ? 'followers' : 'following'}',
+          queryParameters: {'page': page})),
+      FollowUser.fromJson);
+
+  /// Follows or unfollows; returns the new follower count.
+  Future<({bool following, int followers})> setFollowing(String userId, bool follow) async {
+    final path = '/api/users/$userId/follow';
+    final data = await _call(() => follow ? _dio.put(path) : _dio.delete(path));
+    return (following: data['isFollowing'] as bool, followers: data['followerCount'] as int);
+  }
 
   // ---------- Capture tickets ----------
 
@@ -182,11 +212,14 @@ class ApiClient {
 
   // ---------- Notifications ----------
 
+  // follows: the server only sends follow notifications to apps that ask, since older ones can't show them.
   Future<Paged<AppNotification>> notifications({int page = 1}) async => Paged.fromJson(
-      await _call(() => _dio.get('/api/notifications', queryParameters: {'page': page})), AppNotification.fromJson);
+      await _call(() => _dio.get('/api/notifications', queryParameters: {'page': page, 'follows': true})),
+      AppNotification.fromJson);
 
   Future<int> unreadNotificationCount() async =>
-      (await _call(() => _dio.get('/api/notifications/unread-count')))['count'] as int;
+      (await _call(() => _dio.get('/api/notifications/unread-count', queryParameters: {'follows': true})))['count']
+          as int;
 
   Future<void> markNotificationRead(String id) => _call(() => _dio.post('/api/notifications/$id/read'));
 

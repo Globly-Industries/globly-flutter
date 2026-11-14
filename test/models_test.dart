@@ -42,4 +42,21 @@ void main() {
     expect(single.isCluster, isFalse);
     expect(single.mediaType, MediaType.video);
   });
+
+  test('follow notifications have no post', () {
+    final n = AppNotification.fromJson({
+      'id': 'n1',
+      'type': 'Follow',
+      'actor': {'id': 'u1', 'userName': 'anna'},
+      'postId': null,
+      'postTitle': null,
+      'commentId': null,
+      'commentBody': null,
+      'createdAt': '2026-11-14T10:00:00Z',
+      'isRead': false,
+    });
+    expect(n.type, NotificationType.follow);
+    expect(n.postId, isNull);
+    expect(n.markedRead().isRead, isTrue);
+  });
 }

@@ -9,6 +9,7 @@ import '../widgets/common.dart';
 import '../widgets/errors.dart';
 import '../widgets/glass.dart';
 import 'post_detail_screen.dart';
+import 'user_screen.dart';
 
 /// Bell with an unread badge, next to the profile button. Hidden for guests.
 class NotificationsButton extends StatelessWidget {
@@ -102,7 +103,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       _state.markRead();
       _api.markNotificationRead(n.id).ignore();
     }
-    await Navigator.push(context, MaterialPageRoute(builder: (_) => PostDetailScreen(postId: n.postId)));
+    final postId = n.postId;
+    if (postId == null) {
+      openUserProfile(context, n.actor);
+    } else {
+      await Navigator.push(context, MaterialPageRoute(builder: (_) => PostDetailScreen(postId: postId)));
+    }
   }
 
   Future<void> _markAllRead() async {
@@ -165,20 +171,26 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     final l = context.l10n;
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    final title = n.type == NotificationType.mention
-        ? l.notificationMention(n.actor.userName, n.postTitle)
-        : l.notificationComment(n.actor.userName, n.postTitle);
+    final title = switch (n.type) {
+      NotificationType.follow => l.notificationFollow(n.actor.userName),
+      NotificationType.mention => l.notificationMention(n.actor.userName, n.postTitle ?? ''),
+      NotificationType.comment => l.notificationComment(n.actor.userName, n.postTitle ?? ''),
+    };
+    final body = n.commentBody;
 
     return ListTile(
       onTap: onTap,
       tileColor: n.isRead ? null : scheme.primary.withValues(alpha: 0.08),
-      leading: UserAvatar(n.actor.userName, radius: 20),
+      leading: GestureDetector(
+        onTap: () => openUserProfile(context, n.actor),
+        child: UserAvatar(n.actor.userName, radius: 20),
+      ),
       title: Text(title, style: n.isRead ? null : const TextStyle(fontWeight: FontWeight.w600)),
       subtitle: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(n.commentBody, maxLines: 2, overflow: TextOverflow.ellipsis),
+        if (body != null) Text(body, maxLines: 2, overflow: TextOverflow.ellipsis),
         Text(timeAgo(context, n.createdAt), style: theme.textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant)),
       ]),
-      isThreeLine: true,
+      isThreeLine: body != null,
     );
   }
 }

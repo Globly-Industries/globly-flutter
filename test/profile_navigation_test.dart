@@ -18,7 +18,15 @@ class _FakeApi extends ApiClient {
   Future<String?> captchaSiteKey() async => null;
 
   @override
-  Future<Paged<Post>> feed({int page = 1, PostFilter filter = const PostFilter()}) async => const Paged([], false);
+  Future<Paged<Post>> feed({
+    int page = 1,
+    FeedTab tab = FeedTab.recent,
+    double? lat,
+    double? lng,
+    double? radiusKm,
+    PostFilter filter = const PostFilter(),
+  }) async =>
+      const Paged([], false);
 
   @override
   Future<List<MapPoint>> mapPoints({

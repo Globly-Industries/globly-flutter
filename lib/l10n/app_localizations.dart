@@ -305,7 +305,7 @@ abstract class AppLocalizations {
   /// No description provided for @newest.
   ///
   /// In en, this message translates to:
-  /// **'Newest'**
+  /// **'Recent'**
   String get newest;
 
   /// No description provided for @nearby.
@@ -1105,6 +1105,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Post details'**
   String get postDetails;
+
+  /// No description provided for @following.
+  ///
+  /// In en, this message translates to:
+  /// **'Following'**
+  String get following;
+
+  /// No description provided for @followers.
+  ///
+  /// In en, this message translates to:
+  /// **'Followers'**
+  String get followers;
+
+  /// No description provided for @follow.
+  ///
+  /// In en, this message translates to:
+  /// **'Follow'**
+  String get follow;
+
+  /// No description provided for @unfollow.
+  ///
+  /// In en, this message translates to:
+  /// **'Unfollow'**
+  String get unfollow;
+
+  /// No description provided for @followingSignIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to follow people and see their posts here.'**
+  String get followingSignIn;
+
+  /// No description provided for @followingEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing from people you follow yet'**
+  String get followingEmpty;
+
+  /// No description provided for @followingEmptyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap someone\'s name on a post to see their profile and follow them.'**
+  String get followingEmptyHint;
+
+  /// No description provided for @signInToFollow.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to follow people.'**
+  String get signInToFollow;
+
+  /// No description provided for @noUserPosts.
+  ///
+  /// In en, this message translates to:
+  /// **'No posts yet.'**
+  String get noUserPosts;
+
+  /// No description provided for @noFollowers.
+  ///
+  /// In en, this message translates to:
+  /// **'No followers yet.'**
+  String get noFollowers;
+
+  /// No description provided for @noFollowing.
+  ///
+  /// In en, this message translates to:
+  /// **'Not following anyone yet.'**
+  String get noFollowing;
+
+  /// No description provided for @notificationFollow.
+  ///
+  /// In en, this message translates to:
+  /// **'{user} started following you'**
+  String notificationFollow(String user);
 }
 
 class _AppLocalizationsDelegate

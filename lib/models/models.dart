@@ -48,6 +48,43 @@ class Author {
   factory Author.fromJson(Map<String, dynamic> j) => Author(j['id'], j['userName']);
 }
 
+/// Someone's public profile.
+class UserProfile {
+  final String id;
+  final String userName;
+  final int postCount;
+  final int followerCount;
+  final int followingCount;
+  final bool isFollowing;
+
+  const UserProfile({
+    required this.id,
+    required this.userName,
+    required this.postCount,
+    required this.followerCount,
+    required this.followingCount,
+    required this.isFollowing,
+  });
+
+  factory UserProfile.fromJson(Map<String, dynamic> j) => UserProfile(
+        id: j['id'],
+        userName: j['userName'],
+        postCount: j['postCount'],
+        followerCount: j['followerCount'],
+        followingCount: j['followingCount'],
+        isFollowing: j['isFollowing'] ?? false,
+      );
+
+  UserProfile withFollow(bool following, int followers) => UserProfile(
+        id: id,
+        userName: userName,
+        postCount: postCount,
+        followerCount: followers,
+        followingCount: followingCount,
+        isFollowing: following,
+      );
+}
+
 class Media {
   final String url;
   final String contentType;
@@ -223,15 +260,16 @@ class Comment {
       );
 }
 
-enum NotificationType { comment, mention }
+enum NotificationType { comment, mention, follow }
 
+/// A comment or mention on a post, or a new follower ([postId] and the rest are then null).
 class AppNotification {
   final String id;
   final NotificationType type;
   final Author actor;
-  final String postId;
-  final String postTitle;
-  final String commentBody;
+  final String? postId;
+  final String? postTitle;
+  final String? commentBody;
   final DateTime createdAt;
   final bool isRead;
 
@@ -242,7 +280,11 @@ class AppNotification {
 
   factory AppNotification.fromJson(Map<String, dynamic> j) => AppNotification(
         j['id'],
-        j['type'] == 'Mention' ? NotificationType.mention : NotificationType.comment,
+        switch (j['type']) {
+          'Mention' => NotificationType.mention,
+          'Follow' => NotificationType.follow,
+          _ => NotificationType.comment,
+        },
         Author.fromJson(j['actor']),
         j['postId'],
         j['postTitle'],
@@ -250,6 +292,21 @@ class AppNotification {
         DateTime.parse(j['createdAt']),
         j['isRead'],
       );
+}
+
+/// A user in a followers or following list.
+class FollowUser {
+  final String id;
+  final String userName;
+
+  /// Whether the signed-in user follows them.
+  final bool isFollowing;
+
+  const FollowUser(this.id, this.userName, this.isFollowing);
+
+  Author get author => Author(id, userName);
+
+  factory FollowUser.fromJson(Map<String, dynamic> j) => FollowUser(j['id'], j['userName'], j['isFollowing'] ?? false);
 }
 
 class AdminUser {
@@ -262,6 +319,15 @@ class AdminUser {
 
   factory AdminUser.fromJson(Map<String, dynamic> j) =>
       AdminUser(j['id'], j['userName'], j['isAdmin'], j['postCount']);
+}
+
+/// Feed tabs; the server ranks each one differently.
+enum FeedTab {
+  recent,
+  nearby,
+  following;
+
+  String get apiName => name[0].toUpperCase() + name.substring(1);
 }
 
 class Paged<T> {

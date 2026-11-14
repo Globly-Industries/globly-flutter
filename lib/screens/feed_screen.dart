@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../api/api_client.dart';
 import '../models/models.dart';
+import '../state/auth_state.dart';
 import '../state/filter_state.dart';
 import '../state/settings_state.dart';
 import '../widgets/common.dart';
@@ -16,11 +17,10 @@ import '../widgets/post_card.dart';
 import 'notifications_screen.dart';
 import 'post_detail_screen.dart';
 import 'profile_screen.dart';
+import 'user_screen.dart';
 
-enum FeedMode { newest, nearby }
-
-/// Feed of posts: newest first (paged) or nearest to the user. Shown either full screen, one post
-/// per page (see [ImmersiveFeed]), or as a list of cards; the choice is remembered in [SettingsState].
+/// Feed of posts in three tabs the server ranks (recent, nearby, followed people). Shown either full
+/// screen, one post per page (see [ImmersiveFeed]), or as a list of cards; the choice is remembered in [SettingsState].
 class FeedScreen extends StatefulWidget {
   /// Whether this tab is the one on screen; the full-screen feed only plays media while it is.
   final bool visible;
@@ -37,7 +37,7 @@ class FeedScreen extends StatefulWidget {
 class FeedScreenState extends State<FeedScreen> {
   final _scroll = ScrollController();
   final List<Post> _posts = [];
-  FeedMode _mode = FeedMode.newest;
+  FeedTab _mode = FeedTab.recent;
   int _page = 0;
   bool _hasMore = true;
   bool _loading = false;
@@ -49,6 +49,11 @@ class FeedScreenState extends State<FeedScreen> {
 
   /// Incremented on refresh so responses of superseded requests are dropped.
   int _generation = 0;
+
+  /// Where the Nearby tab ranks from; taken once per refresh so its pages agree.
+  LatLng? _nearbyFrom;
+
+  static const _nearbyRadiusKm = 50.0;
 
   @override
   void initState() {
@@ -75,6 +80,7 @@ class FeedScreenState extends State<FeedScreen> {
     _page = 0;
     _hasMore = true;
     _loading = false;
+    _nearbyFrom = null;
     _posts.clear();
     await _loadMore();
   }
@@ -88,23 +94,30 @@ class FeedScreenState extends State<FeedScreen> {
     });
     final api = context.read<ApiClient>();
     try {
-      if (_mode == FeedMode.nearby) {
+      if (_mode == FeedTab.following && !context.read<AuthState>().isSignedIn) {
+        _hasMore = false;
+        return;
+      }
+      if (_mode == FeedTab.nearby && _nearbyFrom == null) {
         final here = await currentLocation();
         if (gen != _generation) return;
-        _here = here;
-        final items = await api.nearby(here.latitude, here.longitude, radiusKm: 50, filter: _filters.filter);
-        if (gen != _generation) return;
-        _posts
-          ..clear()
-          ..addAll(items);
-        _hasMore = false;
-      } else {
-        final page = await api.feed(page: _page + 1, filter: _filters.filter);
-        if (gen != _generation) return;
-        _posts.addAll(page.items);
-        _page++;
-        _hasMore = page.hasMore;
+        _here = _nearbyFrom = here;
       }
+      final from = _mode == FeedTab.nearby ? _nearbyFrom : null;
+      final page = await api.feed(
+        page: _page + 1,
+        tab: _mode,
+        lat: from?.latitude,
+        lng: from?.longitude,
+        radiusKm: from == null ? null : _nearbyRadiusKm,
+        filter: _filters.filter,
+      );
+      if (gen != _generation) return;
+      // Rankings move as votes come in, so a post can turn up on two pages.
+      final seen = _posts.map((p) => p.id).toSet();
+      _posts.addAll(page.items.where((p) => seen.add(p.id)));
+      _page++;
+      _hasMore = page.hasMore;
     } catch (e) {
       if (gen != _generation) return;
       _error = e;
@@ -114,7 +127,7 @@ class FeedScreenState extends State<FeedScreen> {
     }
   }
 
-  void _setMode(FeedMode mode) {
+  void _setMode(FeedTab mode) {
     if (mode == _mode) return;
     setState(() => _mode = mode);
     refresh();
@@ -156,10 +169,12 @@ class FeedScreenState extends State<FeedScreen> {
     final immersive = context.select<SettingsState, bool>((s) => s.immersiveFeed);
     final filterActive = context.watch<FilterState>().filter.isActive;
     return GestureDetector(
-      // Swipe left for Nearby, right for Newest, matching the tabs' order.
+      // Swipe left for the next tab, right for the previous one.
       onHorizontalDragEnd: (d) {
         final v = d.primaryVelocity ?? 0;
-        if (v.abs() >= 300) _setMode(v < 0 ? FeedMode.nearby : FeedMode.newest);
+        if (v.abs() < 300) return;
+        final next = _mode.index + (v < 0 ? 1 : -1);
+        if (next >= 0 && next < FeedTab.values.length) _setMode(FeedTab.values[next]);
       },
       child: immersive ? _buildImmersive(filterActive) : _buildList(filterActive),
     );
@@ -181,6 +196,8 @@ class FeedScreenState extends State<FeedScreen> {
         onPostChanged: _replace,
         onOpen: _open,
         onShowOnMap: widget.onShowOnMap,
+        onOpenAuthor: (a) => openUserProfile(context, a),
+        empty: _emptyState(),
         topBar: _ImmersiveTopBar(
           mode: _mode,
           onMode: _setMode,
@@ -215,17 +232,22 @@ class FeedScreenState extends State<FeedScreen> {
                   return ContentWidth(
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
-                      child: SegmentedButton<FeedMode>(
+                      child: SegmentedButton<FeedTab>(
                         segments: [
                           ButtonSegment(
-                            value: FeedMode.newest,
+                            value: FeedTab.recent,
                             label: Text(l.newest),
                             icon: const Icon(Icons.schedule_rounded),
                           ),
                           ButtonSegment(
-                            value: FeedMode.nearby,
+                            value: FeedTab.nearby,
                             label: Text(l.nearby),
                             icon: const Icon(Icons.near_me_rounded),
+                          ),
+                          ButtonSegment(
+                            value: FeedTab.following,
+                            label: Text(l.following),
+                            icon: const Icon(Icons.people_alt_rounded),
                           ),
                         ],
                         selected: {_mode},
@@ -240,7 +262,11 @@ class FeedScreenState extends State<FeedScreen> {
                   return ContentWidth(
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-                      child: PostCard(post: post, onTap: () => _open(post)),
+                      child: PostCard(
+                        post: post,
+                        onTap: () => _open(post),
+                        onAuthorTap: () => openUserProfile(context, post.author),
+                      ),
                     ),
                   );
                 }
@@ -257,9 +283,7 @@ class FeedScreenState extends State<FeedScreen> {
                     action: OutlinedButton(onPressed: refresh, child: Text(l.retry)),
                   );
                 }
-                if (_posts.isEmpty) {
-                  return EmptyState(icon: Icons.explore_rounded, title: l.noPostsYet, subtitle: l.noPostsHint);
-                }
+                if (_posts.isEmpty) return _emptyState();
                 return const SizedBox.shrink();
               },
             ),
@@ -268,12 +292,29 @@ class FeedScreenState extends State<FeedScreen> {
       ),
     );
   }
+
+  /// What an empty tab shows once loading is done.
+  Widget _emptyState() {
+    final l = context.l10n;
+    if (_mode != FeedTab.following) {
+      return EmptyState(icon: Icons.explore_rounded, title: l.noPostsYet, subtitle: l.noPostsHint);
+    }
+    final auth = context.read<AuthState>();
+    if (!auth.isSignedIn) {
+      return EmptyState(
+        icon: Icons.people_alt_rounded,
+        title: l.followingSignIn,
+        action: FilledButton(onPressed: auth.requestSignIn, child: Text(l.signInOrRegister)),
+      );
+    }
+    return EmptyState(icon: Icons.people_alt_rounded, title: l.followingEmpty, subtitle: l.followingEmptyHint);
+  }
 }
 
-/// "Newest | Nearby" as text tabs in the middle, buttons on the right, over the full-screen feed.
+/// "Recent | Nearby | Following" as text tabs in the middle, buttons on the right, over the full-screen feed.
 class _ImmersiveTopBar extends StatelessWidget {
-  final FeedMode mode;
-  final ValueChanged<FeedMode> onMode;
+  final FeedTab mode;
+  final ValueChanged<FeedTab> onMode;
   final List<Widget> actions;
 
   const _ImmersiveTopBar({required this.mode, required this.onMode, required this.actions});
@@ -281,11 +322,15 @@ class _ImmersiveTopBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = context.l10n;
-    Widget tab(FeedMode value, String label) {
+    Widget tab(FeedTab value, String label) {
       final selected = value == mode;
       return TextButton(
         onPressed: () => onMode(value),
-        style: TextButton.styleFrom(foregroundColor: Colors.white),
+        style: TextButton.styleFrom(
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          minimumSize: const Size(0, 40),
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -317,10 +362,19 @@ class _ImmersiveTopBar extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const SizedBox(width: 8),
-          tab(FeedMode.newest, l.newest),
-          tab(FeedMode.nearby, l.nearby),
-          const Spacer(),
+          const SizedBox(width: 4),
+          // Shrinks the tabs rather than overflowing on narrow phones.
+          Expanded(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Row(children: [
+                tab(FeedTab.recent, l.newest),
+                tab(FeedTab.nearby, l.nearby),
+                tab(FeedTab.following, l.following),
+              ]),
+            ),
+          ),
           ...actions,
         ],
       ),

@@ -15,6 +15,7 @@ import '../widgets/language_menu.dart';
 import '../widgets/post_card.dart';
 import 'admin_screen.dart';
 import 'post_detail_screen.dart';
+import 'user_screen.dart';
 
 /// Top-right button opening the profile: the user's avatar, or a person icon for guests.
 class ProfileButton extends StatelessWidget {
@@ -46,6 +47,7 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   List<Post>? _posts;
+  UserProfile? _profile;
   bool _hasMore = false;
   Object? _error;
   String? _loadedFor;
@@ -73,10 +75,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _load() async {
     try {
       // First page is enough for now; add paging when users have many posts.
-      final page = await context.read<ApiClient>().myPosts();
+      final api = context.read<ApiClient>();
+      final userId = context.read<AuthState>().user?.id;
+      // Follower counts are extra; their failure shouldn't hide the posts.
+      final profile = userId == null
+          ? Future<UserProfile?>.value(null)
+          : api.userProfile(userId).then<UserProfile?>((p) => p, onError: (_) => null);
+      final page = await api.myPosts();
+      final counts = await profile;
       if (mounted) {
         setState(() {
           _posts = page.items;
+          _profile = counts;
           _hasMore = page.hasMore;
           _error = null;
         });
@@ -158,10 +168,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ],
               ]),
               const SizedBox(height: 8),
-              Row(children: [
-                _Stat(value: _posts == null ? '–' : '${posts.length}${_hasMore ? '+' : ''}', label: l.posts),
-                const SizedBox(width: 24),
-                _Stat(value: _posts == null ? '–' : '$totalScore', label: l.score),
+              Wrap(spacing: 24, runSpacing: 8, children: [
+                ProfileStat(value: _posts == null ? '–' : '${posts.length}${_hasMore ? '+' : ''}', label: l.posts),
+                ProfileStat(value: _posts == null ? '–' : '$totalScore', label: l.score),
+                ProfileStat(
+                  value: '${_profile?.followerCount ?? '–'}',
+                  label: l.followers,
+                  onTap: () => openFollowList(context, auth.user!.id, followers: true),
+                ),
+                ProfileStat(
+                  value: '${_profile?.followingCount ?? '–'}',
+                  label: l.following,
+                  onTap: () => openFollowList(context, auth.user!.id, followers: false),
+                ),
               ]),
             ]),
           ),
@@ -246,17 +265,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 }
 
-class _Stat extends StatelessWidget {
+class ProfileStat extends StatelessWidget {
   final String value;
   final String label;
-  const _Stat({required this.value, required this.label});
+  final VoidCallback? onTap;
+  const ProfileStat({super.key, required this.value, required this.label, this.onTap});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+    final stat = Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Text(value, style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800)),
       Text(label, style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
     ]);
+    return onTap == null ? stat : GestureDetector(onTap: onTap, behavior: HitTestBehavior.opaque, child: stat);
   }
 }

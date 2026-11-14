@@ -55,6 +55,10 @@ class ImmersiveFeed extends StatefulWidget {
   final ValueChanged<Post> onPostChanged;
   final ValueChanged<Post> onOpen;
   final ValueChanged<Post>? onShowOnMap;
+  final ValueChanged<Author>? onOpenAuthor;
+
+  /// Shown when there are no posts, instead of the generic message.
+  final Widget? empty;
 
   const ImmersiveFeed({
     super.key,
@@ -71,6 +75,8 @@ class ImmersiveFeed extends StatefulWidget {
     required this.onPostChanged,
     required this.onOpen,
     this.onShowOnMap,
+    this.onOpenAuthor,
+    this.empty,
   });
 
   @override
@@ -172,6 +178,7 @@ class _ImmersiveFeedState extends State<ImmersiveFeed> {
       final current = widget.posts.where((p) => p.id == post.id).firstOrNull ?? post;
       widget.onPostChanged(current.copyWith(commentCount: count));
     },
+    onOpenAuthor: widget.onOpenAuthor,
   );
 
   /// Mouse wheel and trackpad: one notch moves one whole page, instead of scrolling part way.
@@ -234,6 +241,7 @@ class _ImmersiveFeedState extends State<ImmersiveFeed> {
                   onComments: () => _comments(post),
                   onOpen: () => widget.onOpen(post),
                   onShowOnMap: widget.onShowOnMap == null ? null : () => widget.onShowOnMap!(post),
+                  onOpenAuthor: widget.onOpenAuthor == null ? null : () => widget.onOpenAuthor!(post.author),
                 ),
               );
             },
@@ -297,7 +305,7 @@ class _ImmersiveFeedState extends State<ImmersiveFeed> {
         action: OutlinedButton(onPressed: widget.onRefresh, child: Text(l.retry)),
       );
     } else {
-      state = EmptyState(icon: Icons.explore_rounded, title: l.noPostsYet, subtitle: l.noPostsHint);
+      state = widget.empty ?? EmptyState(icon: Icons.explore_rounded, title: l.noPostsYet, subtitle: l.noPostsHint);
     }
     return RefreshIndicator(
       onRefresh: widget.onRefresh,
@@ -345,6 +353,7 @@ class _FeedPage extends StatefulWidget {
   final VoidCallback onComments;
   final VoidCallback onOpen;
   final VoidCallback? onShowOnMap;
+  final VoidCallback? onOpenAuthor;
 
   const _FeedPage({
     required this.post,
@@ -357,6 +366,7 @@ class _FeedPage extends StatefulWidget {
     required this.onComments,
     required this.onOpen,
     required this.onShowOnMap,
+    this.onOpenAuthor,
   });
 
   @override
@@ -461,6 +471,7 @@ class _FeedPageState extends State<_FeedPage> {
             expanded: _expanded,
             onToggle: () => setState(() => _expanded = !_expanded),
             onShowOnMap: widget.onShowOnMap,
+            onOpenAuthor: widget.onOpenAuthor,
           ),
         ),
 
@@ -517,6 +528,7 @@ class _Details extends StatelessWidget {
 
   /// Tapping the distance shows the post on the map.
   final VoidCallback? onShowOnMap;
+  final VoidCallback? onOpenAuthor;
 
   const _Details({
     required this.post,
@@ -524,6 +536,7 @@ class _Details extends StatelessWidget {
     required this.expanded,
     required this.onToggle,
     this.onShowOnMap,
+    this.onOpenAuthor,
   });
 
   static const _shadow = [Shadow(color: Color(0x99000000), blurRadius: 6)];
@@ -556,13 +569,23 @@ class _Details extends StatelessWidget {
           children: [
             Row(
               children: [
-                UserAvatar(post.author.userName, radius: 16),
-                const SizedBox(width: 8),
                 Flexible(
-                  child: Text(
-                    post.author.userName,
-                    overflow: TextOverflow.ellipsis,
-                    style: white.copyWith(fontWeight: FontWeight.w700, fontSize: 15),
+                  child: GestureDetector(
+                    onTap: onOpenAuthor,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        UserAvatar(post.author.userName, radius: 16),
+                        const SizedBox(width: 8),
+                        Flexible(
+                          child: Text(
+                            post.author.userName,
+                            overflow: TextOverflow.ellipsis,
+                            style: white.copyWith(fontWeight: FontWeight.w700, fontSize: 15),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
                 Text(

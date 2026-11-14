@@ -9,11 +9,12 @@ class PostCard extends StatelessWidget {
   final Post post;
   final VoidCallback? onTap;
   final Widget? trailing;
+  final VoidCallback? onAuthorTap;
 
   /// Shorter layout for previews (smaller media, fewer description lines).
   final bool compact;
 
-  const PostCard({super.key, required this.post, this.onTap, this.trailing, this.compact = false});
+  const PostCard({super.key, required this.post, this.onTap, this.trailing, this.onAuthorTap, this.compact = false});
 
   @override
   Widget build(BuildContext context) {
@@ -32,14 +33,23 @@ class PostCard extends StatelessWidget {
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             // Author row
             Row(children: [
-              UserAvatar(post.author.userName, radius: 18),
-              const SizedBox(width: 10),
               Expanded(
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text(post.author.userName, style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
-                  Text(timeAgo(context, post.createdAt),
-                      style: theme.textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant)),
-                ]),
+                child: GestureDetector(
+                  onTap: onAuthorTap,
+                  behavior: HitTestBehavior.opaque,
+                  child: Row(children: [
+                    UserAvatar(post.author.userName, radius: 18),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        Text(post.author.userName,
+                            style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
+                        Text(timeAgo(context, post.createdAt),
+                            style: theme.textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant)),
+                      ]),
+                    ),
+                  ]),
+                ),
               ),
               if (post.isHidden) ...[
                 Pill(icon: Icons.visibility_off_rounded, label: l.hidden, color: scheme.error),

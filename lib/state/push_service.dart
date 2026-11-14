@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 
 import '../api/api_client.dart';
 import '../screens/post_detail_screen.dart';
+import '../screens/user_screen.dart';
 import 'auth_state.dart';
 import 'notifications_state.dart';
 import 'settings_state.dart';
@@ -110,16 +111,19 @@ class PushService {
     } catch (_) {/* offline: nothing more to do */}
   }
 
-  /// Tapped push: open its post, after the current frame so the navigator exists.
+  /// Tapped push: open its post (or the new follower), after the current frame so the navigator exists.
   void _open(RemoteMessage message) {
     final postId = message.data['postId'] as String?;
+    final userId = message.data['userId'] as String?;
     final notificationId = message.data['notificationId'] as String?;
-    if (postId == null) return;
+    if (postId == null && userId == null) return;
     if (notificationId != null) {
       _api.markNotificationRead(notificationId).then((_) => _notifications.refresh(), onError: (_) {});
     }
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _navigator.currentState?.push(MaterialPageRoute(builder: (_) => PostDetailScreen(postId: postId)));
+      _navigator.currentState?.push(postId != null
+          ? MaterialPageRoute(builder: (_) => PostDetailScreen(postId: postId))
+          : userProfileRoute(_auth, userId!));
     });
   }
 }

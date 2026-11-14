@@ -13,16 +13,22 @@ const _maxCommentLength = 1000;
 
 /// Opens a post's comments in a sheet over the feed, so reading and writing them doesn't leave it.
 /// [onCountChanged] gets the post's new comment count whenever one is added or deleted.
-Future<void> showCommentsSheet(BuildContext context, Post post, {required ValueChanged<int> onCountChanged}) =>
+Future<void> showCommentsSheet(
+  BuildContext context,
+  Post post, {
+  required ValueChanged<int> onCountChanged,
+  ValueChanged<Author>? onOpenAuthor,
+}) =>
     showGlassSheet<void>(
       context,
-      builder: (_) => _CommentsSheet(post: post, onCountChanged: onCountChanged),
+      builder: (_) => _CommentsSheet(post: post, onCountChanged: onCountChanged, onOpenAuthor: onOpenAuthor),
     );
 
 class _CommentsSheet extends StatefulWidget {
   final Post post;
   final ValueChanged<int> onCountChanged;
-  const _CommentsSheet({required this.post, required this.onCountChanged});
+  final ValueChanged<Author>? onOpenAuthor;
+  const _CommentsSheet({required this.post, required this.onCountChanged, this.onOpenAuthor});
 
   @override
   State<_CommentsSheet> createState() => _CommentsSheetState();
@@ -125,7 +131,10 @@ class _CommentsSheetState extends State<_CommentsSheet> {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                UserAvatar(c.author.userName, radius: 16),
+                GestureDetector(
+                  onTap: widget.onOpenAuthor == null ? null : () => widget.onOpenAuthor!(c.author),
+                  child: UserAvatar(c.author.userName, radius: 16),
+                ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Column(
@@ -134,10 +143,13 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                       Row(
                         children: [
                           Flexible(
-                            child: Text(
-                              c.author.userName,
-                              overflow: TextOverflow.ellipsis,
-                              style: theme.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700),
+                            child: GestureDetector(
+                              onTap: widget.onOpenAuthor == null ? null : () => widget.onOpenAuthor!(c.author),
+                              child: Text(
+                                c.author.userName,
+                                overflow: TextOverflow.ellipsis,
+                                style: theme.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700),
+                              ),
                             ),
                           ),
                           const SizedBox(width: 8),

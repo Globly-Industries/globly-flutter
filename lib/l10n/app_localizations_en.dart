@@ -111,7 +111,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get apply => 'Apply';
 
   @override
-  String get newest => 'Newest';
+  String get newest => 'Recent';
 
   @override
   String get nearby => 'Nearby';
@@ -562,4 +562,44 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get postDetails => 'Post details';
+
+  @override
+  String get following => 'Following';
+
+  @override
+  String get followers => 'Followers';
+
+  @override
+  String get follow => 'Follow';
+
+  @override
+  String get unfollow => 'Unfollow';
+
+  @override
+  String get followingSignIn =>
+      'Sign in to follow people and see their posts here.';
+
+  @override
+  String get followingEmpty => 'Nothing from people you follow yet';
+
+  @override
+  String get followingEmptyHint =>
+      'Tap someone\'s name on a post to see their profile and follow them.';
+
+  @override
+  String get signInToFollow => 'Sign in to follow people.';
+
+  @override
+  String get noUserPosts => 'No posts yet.';
+
+  @override
+  String get noFollowers => 'No followers yet.';
+
+  @override
+  String get noFollowing => 'Not following anyone yet.';
+
+  @override
+  String notificationFollow(String user) {
+    return '$user started following you';
+  }
 }

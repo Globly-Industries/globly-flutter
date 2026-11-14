@@ -39,7 +39,7 @@
   "reset": "Reset",
   "apply": "Apply",
 
-  "newest": "Newest",
+  "newest": "Recent",
   "nearby": "Nearby",
   "noPostsYet": "No posts here yet",
   "noPostsHint": "Be the first to share something!",
@@ -198,5 +198,19 @@
   "soundOn": "Turn sound on",
   "soundOff": "Turn sound off",
   "readMore": "Read more",
-  "postDetails": "Post details"
+  "postDetails": "Post details",
+
+  "following": "Following",
+  "followers": "Followers",
+  "follow": "Follow",
+  "unfollow": "Unfollow",
+  "followingSignIn": "Sign in to follow people and see their posts here.",
+  "followingEmpty": "Nothing from people you follow yet",
+  "followingEmptyHint": "Tap someone's name on a post to see their profile and follow them.",
+  "signInToFollow": "Sign in to follow people.",
+  "noUserPosts": "No posts yet.",
+  "noFollowers": "No followers yet.",
+  "noFollowing": "Not following anyone yet.",
+  "notificationFollow": "{user} started following you",
+  "@notificationFollow": { "placeholders": { "user": { "type": "String" } } }
 }
