@@ -19,11 +19,11 @@ object CaptureAttestation {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) throw IllegalStateException("Key attestation needs Android 7")
         return try {
             withRetry { generate(challenge, rsa = false) }
-        } catch (ec: Exception) {
+        } catch (ec: Throwable) {
             // Some vendor TEEs fail EC attestation with their own error codes but can still attest RSA keys.
             try {
                 withRetry { generate(challenge, rsa = true) }
-            } catch (rsa: Exception) {
+            } catch (rsa: Throwable) {
                 // Device first: the app truncates this to 1000 chars for the server log.
                 throw IllegalStateException("$device EC: ${describe(ec)} | RSA: ${describe(rsa)}", rsa)
             }
@@ -72,13 +72,19 @@ object CaptureAttestation {
     private val device get() = "(Android ${Build.VERSION.SDK_INT}, ${Build.MANUFACTURER} ${Build.MODEL})"
 
     // Keystore2 dumps every key parameter into its message; that alone used up the whole log line.
-    private val keyParams = Regex("""\s*(and params: )?\[KeyParameter \{.*?} ]""")
+    // Android's ICU regex rejects an unescaped '}', which broke this object's static init.
+    private val keyParams by lazy { Regex("""\s*(and params: )?\[KeyParameter \{.*?\}\s*\]""") }
 
     /** The whole cause chain on one line, since the top message is just "Failed to generate key pair". */
     private fun describe(e: Throwable) = causes(e).joinToString(" <- ") {
         val code = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && it is KeyStoreException)
             " [code ${it.numericErrorCode}]" else ""
-        val message = it.message?.replace(Regex("\\s+"), " ")?.replace(keyParams, "")
+        // Trimming is cosmetic; it must never mask the real error.
+        val message = try {
+            it.message?.replace(Regex("\\s+"), " ")?.replace(keyParams, "")
+        } catch (_: Throwable) {
+            it.message
+        }
         "${it.javaClass.simpleName}: $message$code"
     }.take(400)
 }

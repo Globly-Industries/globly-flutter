@@ -64,7 +64,8 @@ class MainActivity : FlutterActivity() {
                         runOnUiThread {
                             outcome.fold(
                                 { result.success(it) },
-                                { result.error("attestation_failed", it.message, null) },
+                                // Errors like ExceptionInInitializerError have no message; keep the class name.
+                                { result.error("attestation_failed", it.message ?: it.toString(), null) },
                             )
                         }
                     }.start()
