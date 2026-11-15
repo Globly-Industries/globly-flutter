@@ -16,10 +16,13 @@ class AppConfig {
   /// hostname must be listed in the Turnstile widget's domains in the Cloudflare dashboard.
   static const turnstileBaseUrl = 'https://globly.dagnis.my.id/';
 
-  /// Public Mapbox token. These are made to be visible to app users, so it lives in the repo.
+  /// Public Mapbox tokens. These are made to be visible to app users, so they live in the repo.
+  /// The web one is URL-restricted, the mobile one can't be.
   /// Override with --dart-define=MAPBOX_TOKEN=... ; empty = no map, only a message.
   static const mapboxToken = String.fromEnvironment(
     'MAPBOX_TOKEN',
-    defaultValue: 'pk.eyJ1IjoiZHJyZW1lc2lzIiwiYSI6ImNtdzd0ZGU5ZzB3MmMyeHNlb2V4Y2IyZnAifQ.4xqPdG58FbjbPtz6JKzv4g',
+    defaultValue: kIsWeb
+        ? 'pk.eyJ1IjoiZHJyZW1lc2lzIiwiYSI6ImNtd2hsdng4NTB3azUyeHIyejFzd3V1YWwifQ.vYmtTyljgTZVsoy9fjAS2g'
+        : 'pk.eyJ1IjoiZHJyZW1lc2lzIiwiYSI6ImNtd2hsdW81dzE3NzkzMHM2aG9sMDVveTAifQ.OgywCTHeOm0CVdGDNyoyeQ',
   );
 }
